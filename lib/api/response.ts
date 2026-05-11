@@ -11,7 +11,7 @@ export function err(message: string, status: number) {
 
 export function handleZodError(e: unknown) {
   if (e instanceof ZodError) {
-    return err(e.errors.map((x) => x.message).join("; "), 400);
+    return err(e.issues.map((x) => x.message).join("; "), 400);
   }
   console.error(e);
   return err("Internal server error", 500);

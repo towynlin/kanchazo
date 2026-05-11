@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "Kanchazo",
@@ -26,7 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="min-h-full antialiased bg-white text-gray-900">{children}</body>
+      <body className="min-h-full antialiased bg-white text-gray-900">
+        <ServiceWorkerRegistrar />
+        {children}
+      </body>
     </html>
   );
 }
