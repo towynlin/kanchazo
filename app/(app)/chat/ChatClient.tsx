@@ -1,0 +1,193 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+
+interface Message {
+  id: string;
+  senderName: string;
+  body: string;
+  sentAt: string;
+  isMe: boolean;
+}
+
+interface Props {
+  teamId: string;
+  userId: string;
+  userName: string;
+  initialMessages: Message[];
+}
+
+function linkify(text: string): string {
+  return text.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-blue-600">$1</a>',
+  );
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  if (isToday) {
+    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+export default function ChatClient({ teamId, userId, userName, initialMessages }: Props) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // WebSocket connection with exponential backoff reconnect
+  useEffect(() => {
+    let attempts = 0;
+
+    function connect() {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws?team=${teamId}`);
+      wsRef.current = ws;
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data) as Message & { senderUserId: string };
+          setMessages((prev) => [
+            ...prev,
+            { ...msg, isMe: msg.senderUserId === userId },
+          ]);
+        } catch {
+          // ignore malformed messages
+        }
+      };
+
+      ws.onopen = () => {
+        attempts = 0;
+      };
+
+      ws.onclose = () => {
+        const delay = Math.min(1000 * 2 ** attempts, 30000);
+        attempts++;
+        reconnectTimeout.current = setTimeout(connect, delay);
+      };
+    }
+
+    connect();
+    return () => {
+      wsRef.current?.close();
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+    };
+  }, [teamId, userId]);
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim() || sending) return;
+
+    const text = body.trim();
+    setBody("");
+    setSending(true);
+
+    // Optimistic message
+    const optimistic: Message = {
+      id: `opt-${Date.now()}`,
+      senderName: userName,
+      body: text,
+      sentAt: new Date().toISOString(),
+      isMe: true,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
+    try {
+      const res = await fetch(`/api/teams/${teamId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text }),
+      });
+      if (!res.ok) {
+        // Remove optimistic message on failure
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+        setBody(text); // Restore draft
+      }
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setBody(text);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.length === 0 && (
+          <div className="text-center text-gray-400 text-sm mt-8">
+            No messages yet. Say hi! 👋
+          </div>
+        )}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}
+          >
+            <div className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}>
+              {!msg.isMe && (
+                <span className="text-xs text-gray-500 px-1">{msg.senderName}</span>
+              )}
+              <div
+                className={`px-3 py-2 rounded-2xl text-sm chat-body ${
+                  msg.isMe
+                    ? "bg-blue-600 text-white rounded-br-sm"
+                    : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                }`}
+                dangerouslySetInnerHTML={{ __html: linkify(msg.body) }}
+              />
+              <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.sentAt)}</span>
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Compose */}
+      <form
+        onSubmit={handleSend}
+        className="flex items-end gap-2 p-3 border-t border-gray-200 bg-white"
+      >
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend(e as unknown as React.FormEvent);
+            }
+          }}
+          placeholder="Message…"
+          rows={1}
+          className="flex-1 px-3 py-2.5 border border-gray-300 rounded-2xl text-sm resize-none
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32"
+        />
+        <button
+          type="submit"
+          disabled={!body.trim() || sending}
+          className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center
+                     disabled:opacity-50 shrink-0 min-h-[40px] min-w-[40px]"
+          aria-label="Send"
+        >
+          ↑
+        </button>
+      </form>
+    </div>
+  );
+}
