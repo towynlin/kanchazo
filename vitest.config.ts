@@ -1,43 +1,29 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
 
+const alias = { "@": path.resolve(__dirname, ".") };
+
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "."),
-    },
-  },
+  resolve: { alias },
   test: {
     projects: [
       {
-        resolve: {
-          alias: {
-            "@": path.resolve(__dirname, "."),
-          },
-        },
+        resolve: { alias },
         test: {
           name: "unit",
           include: ["tests/unit/**/*.test.ts"],
           environment: "node",
-          coverage: {
-            provider: "v8",
-            include: ["lib/**/*.ts"],
-            thresholds: { lines: 90 },
-          },
         },
       },
       {
-        resolve: {
-          alias: {
-            "@": path.resolve(__dirname, "."),
-          },
-        },
+        resolve: { alias },
         test: {
           name: "integration",
           include: ["tests/integration/**/*.test.ts"],
           environment: "node",
+          globalSetup: ["tests/integration/global-setup.ts"],
           setupFiles: ["tests/integration/setup.ts"],
-          poolOptions: { forks: { singleFork: true } },
+          fileParallelism: false,
         },
       },
     ],
