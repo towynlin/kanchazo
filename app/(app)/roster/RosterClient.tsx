@@ -89,7 +89,10 @@ function MemberRow({ member }: { member: Member }) {
       <div className="font-medium text-gray-900 mb-1">{user.name}</div>
       {user.email && (
         <div className="flex items-center gap-1 mt-0.5">
-          <a href={`mailto:${user.email}`} className="text-sm text-blue-600 flex-1 min-w-0 truncate">
+          <a
+            href={`mailto:${user.email}`}
+            className="text-sm text-blue-600 flex-1 min-w-0 truncate"
+          >
             {user.email}
           </a>
           <CopyButton value={user.email} />

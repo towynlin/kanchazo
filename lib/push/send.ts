@@ -28,7 +28,10 @@ export async function sendPushToSubscription(
 
   try {
     await webpush.sendNotification(
-      { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
+      {
+        endpoint: subscription.endpoint,
+        keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+      },
       JSON.stringify(payload),
     );
   } catch (err: unknown) {

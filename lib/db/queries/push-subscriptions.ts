@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { pushSubscriptions } from "@/lib/db/schema";
 
@@ -20,27 +20,17 @@ export async function upsertPushSubscription(data: {
 export async function deletePushSubscription(endpoint: string, userId: string) {
   await db
     .delete(pushSubscriptions)
-    .where(
-      eq(pushSubscriptions.endpoint, endpoint) && eq(pushSubscriptions.userId, userId)
-        ? eq(pushSubscriptions.endpoint, endpoint)
-        : eq(pushSubscriptions.endpoint, ""),
-    );
+    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, userId)));
 }
 
 export async function getPushSubscriptionsForUser(userId: string) {
-  return db
-    .select()
-    .from(pushSubscriptions)
-    .where(eq(pushSubscriptions.userId, userId));
+  return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
 }
 
 export async function getPushSubscriptionsForUsers(userIds: string[]) {
   if (userIds.length === 0) return [];
   const { inArray } = await import("drizzle-orm");
-  return db
-    .select()
-    .from(pushSubscriptions)
-    .where(inArray(pushSubscriptions.userId, userIds));
+  return db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, userIds));
 }
 
 export async function removeStaleSubscription(endpoint: string) {

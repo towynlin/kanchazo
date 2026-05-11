@@ -17,6 +17,8 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
     createdByUserId: null,
     updatedByUserId: null,
     updatedAt: new Date("2025-01-01T00:00:00Z"),
+    notesUpdatedAt: null,
+    notesEditorId: null,
     ...overrides,
   };
 }
