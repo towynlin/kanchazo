@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kanchazo
+      POSTGRES_PASSWORD: kanchazo
+      POSTGRES_DB: kanchazo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanchazo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://kanchazo:kanchazo@postgres:5432/kanchazo
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      SESSION_SECRET: dev-secret-change-in-production
+      SMS_PROVIDER: logger
+      EMAIL_PROVIDER: logger
+      WEBAUTHN_RP_NAME: Kanchazo
+      WEBAUTHN_RP_ID: localhost
+      WEBAUTHN_ORIGIN: http://localhost:3000
+      NODE_ENV: development
+
+volumes:
+  postgres_data:
