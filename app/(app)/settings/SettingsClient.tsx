@@ -12,9 +12,11 @@ interface Props {
     createdAt: string;
     lastUsedAt: string | null;
   }>;
+  teams: Array<{ id: string; name: string }>;
+  mutedTeamIds: string[];
 }
 
-export default function SettingsClient({ user, passkeys }: Props) {
+export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: Props) {
   const router = useRouter();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email ?? "");
@@ -32,6 +34,8 @@ export default function SettingsClient({ user, passkeys }: Props) {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
+  const [mutedTeams, setMutedTeams] = useState<Set<string>>(new Set(mutedTeamIds));
+  const [teamPrefLoading, setTeamPrefLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
@@ -161,6 +165,29 @@ export default function SettingsClient({ user, passkeys }: Props) {
       setPushEnabled(true);
     } finally {
       setPushLoading(false);
+    }
+  }
+
+  async function handleToggleTeamMute(teamId: string) {
+    setTeamPrefLoading(teamId);
+    try {
+      const muted = !mutedTeams.has(teamId);
+      await fetch("/api/push/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId, muted }),
+      });
+      setMutedTeams((prev) => {
+        const next = new Set(prev);
+        if (muted) {
+          next.add(teamId);
+        } else {
+          next.delete(teamId);
+        }
+        return next;
+      });
+    } finally {
+      setTeamPrefLoading(null);
     }
   }
 
@@ -408,6 +435,37 @@ export default function SettingsClient({ user, passkeys }: Props) {
           >
             {pushLoading ? "…" : pushEnabled ? "Disable notifications" : "Enable notifications"}
           </button>
+
+          {pushEnabled && teams.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs font-medium text-gray-500 mb-2">Notify me for:</p>
+              <div className="space-y-2">
+                {teams.map((team) => {
+                  const isMuted = mutedTeams.has(team.id);
+                  const isLoading = teamPrefLoading === team.id;
+                  return (
+                    <div key={team.id} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{team.name}</span>
+                      <button
+                        onClick={() => handleToggleTeamMute(team.id)}
+                        disabled={isLoading}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                          disabled:opacity-50 ${isMuted ? "bg-gray-200" : "bg-blue-600"}`}
+                        role="switch"
+                        aria-checked={!isMuted}
+                        aria-label={`Notifications for ${team.name}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow
+                            transition-transform ${isMuted ? "translate-x-1" : "translate-x-6"}`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </section>
       )}
 

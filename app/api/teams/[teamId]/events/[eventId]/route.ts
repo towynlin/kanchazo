@@ -5,7 +5,7 @@ import { ok, err, handleZodError } from "@/lib/api/response";
 import { getEventById, updateEvent, deleteEvent } from "@/lib/db/queries/events";
 import { writeAuditLog } from "@/lib/db/queries/audit-log";
 import { getTeamMembers } from "@/lib/db/queries/teams";
-import { getPushSubscriptionsForUsers } from "@/lib/db/queries/push-subscriptions";
+import { getNonMutedSubscriptions } from "@/lib/db/queries/push-team-mutes";
 import { sendPushToUsers } from "@/lib/push/send";
 
 const updateSchema = z.object({
@@ -68,16 +68,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<Para
       const members = await getTeamMembers(teamId);
       const otherUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
       if (otherUserIds.length > 0) {
-        const subs = await getPushSubscriptionsForUsers(otherUserIds);
-        if (subs.length > 0) {
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-          const label = event.kind === "game" ? "Game" : "Practice";
-          sendPushToUsers(subs, {
-            title: `${label} cancelled`,
-            body: `${event.location} · ${new Date(event.startsAt).toLocaleDateString()}`,
-            url: `${appUrl}/schedule`,
-          }).catch(() => {});
-        }
+        getNonMutedSubscriptions(otherUserIds, teamId).then((subs) => {
+          if (subs.length > 0) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+            const label = event.kind === "game" ? "Game" : "Practice";
+            sendPushToUsers(subs, {
+              title: `${label} cancelled`,
+              body: `${event.location} · ${new Date(event.startsAt).toLocaleDateString()}`,
+              url: `${appUrl}/schedule`,
+            }).catch(() => {});
+          }
+        }).catch(() => {});
       }
     }
 

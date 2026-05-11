@@ -280,6 +280,24 @@ export const pushSubscriptions = pgTable(
 );
 
 // ──────────────────────────────────────────────
+// Push team mutes
+// ──────────────────────────────────────────────
+
+export const pushTeamMutes = pgTable(
+  "push_team_mutes",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("push_team_mutes_user_team_unique").on(t.userId, t.teamId)],
+);
+
+// ──────────────────────────────────────────────
 // Inferred types
 // ──────────────────────────────────────────────
 
