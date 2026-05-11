@@ -146,6 +146,8 @@ export const events = pgTable("events", {
   opponentName: text("opponent_name"), // game only
   isHome: boolean("is_home"), // game only
   notes: text("notes"),
+  notesUpdatedAt: timestamp("notes_updated_at", { withTimezone: true }),
+  notesEditorId: uuid("notes_editor_id").references(() => users.id, { onDelete: "set null" }),
   status: eventStatusEnum("status").notNull().default("scheduled"),
   createdByUserId: uuid("created_by_user_id").references(() => users.id, {
     onDelete: "set null",
@@ -257,6 +259,25 @@ export const icalTokens = pgTable("ical_tokens", {
   tokenHash: text("token_hash").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ──────────────────────────────────────────────
+// Push subscriptions
+// ──────────────────────────────────────────────
+
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("push_subscriptions_endpoint_unique").on(t.endpoint)],
+);
 
 // ──────────────────────────────────────────────
 // Inferred types

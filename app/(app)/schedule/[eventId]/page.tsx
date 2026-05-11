@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getSessionAndUser } from "@/lib/auth/session";
 import { getTeamsByUser, getTeamMembership } from "@/lib/db/queries/teams";
 import { getEventById } from "@/lib/db/queries/events";
+import { findUserById } from "@/lib/db/queries/users";
 import { getTeamPlayers, getPlayersByGuardian } from "@/lib/db/queries/players";
 import { getEventAvailability } from "@/lib/db/queries/availability";
 import {
@@ -37,7 +38,10 @@ export default async function EventDetailPage({
   const myPlayers = await getPlayersByGuardian(auth.user.id);
   const myTeamPlayerIds = new Set(myPlayers.filter((p) => p.teamId === team.id).map((p) => p.id));
 
-  const availRows = await getEventAvailability(event.id);
+  const [availRows, notesEditor] = await Promise.all([
+    getEventAvailability(event.id),
+    event.notesEditorId ? findUserById(event.notesEditorId) : null,
+  ]);
   const availMap: Record<string, "yes" | "no" | "maybe"> = {};
   for (const a of availRows) {
     availMap[a.playerId] = a.status;
@@ -57,6 +61,8 @@ export default async function EventDetailPage({
         opponentName: event.opponentName,
         isHome: event.isHome,
         notes: event.notes,
+        notesUpdatedAt: event.notesUpdatedAt?.toISOString() ?? null,
+        notesEditorName: notesEditor?.name ?? null,
         startsAt: event.startsAt.toISOString(),
         endsAt: event.endsAt?.toISOString() ?? null,
         title: formatEventTitle(event),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,23 @@ export default function SettingsClient({ user, passkeys }: Props) {
   const [addingPasskey, setAddingPasskey] = useState(false);
   const [icalUrl, setIcalUrl] = useState<string | null>(null);
   const [loadingIcal, setLoadingIcal] = useState(false);
+  const [changingPhone, setChangingPhone] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneStep, setPhoneStep] = useState<"enter" | "verify">("enter");
+  const [phoneSending, setPhoneSending] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    setPushSupported(true);
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => setPushEnabled(!!sub)),
+    );
+  }, []);
 
   async function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
@@ -59,6 +76,91 @@ export default function SettingsClient({ user, passkeys }: Props) {
       }
     } finally {
       setLoadingIcal(false);
+    }
+  }
+
+  async function handleSendPhoneOtp() {
+    setPhoneSending(true);
+    setPhoneError(null);
+    try {
+      const res = await fetch("/api/auth/change-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: newPhone }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setPhoneError(d.error ?? "Failed to send code");
+        return;
+      }
+      setPhoneStep("verify");
+    } finally {
+      setPhoneSending(false);
+    }
+  }
+
+  async function handleVerifyPhone() {
+    setPhoneSending(true);
+    setPhoneError(null);
+    try {
+      const res = await fetch("/api/auth/change-phone", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: newPhone, token: phoneOtp }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setPhoneError(d.error ?? "Invalid or expired code");
+        return;
+      }
+      setChangingPhone(false);
+      setPhoneStep("enter");
+      setNewPhone("");
+      setPhoneOtp("");
+      router.refresh();
+    } finally {
+      setPhoneSending(false);
+    }
+  }
+
+  async function handleTogglePush() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+
+      if (existing) {
+        await existing.unsubscribe();
+        await fetch("/api/push", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: existing.endpoint }),
+        });
+        setPushEnabled(false);
+        return;
+      }
+
+      const keyRes = await fetch("/api/push");
+      if (!keyRes.ok) return;
+      const { publicKey } = await keyRes.json();
+
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: publicKey,
+      });
+      const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+      await fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+      });
+      setPushEnabled(true);
+    } finally {
+      setPushLoading(false);
     }
   }
 
@@ -119,9 +221,87 @@ export default function SettingsClient({ user, passkeys }: Props) {
           </div>
           <div>
             <label className="block text-sm text-gray-700 mb-1">Phone</label>
-            <div className="px-3 py-2.5 bg-gray-50 rounded-xl text-base text-gray-600">
-              {user.phone}
-            </div>
+            {changingPhone ? (
+              <div className="space-y-2">
+                {phoneStep === "enter" ? (
+                  <>
+                    <input
+                      type="tel"
+                      placeholder="+1 415 555 0100"
+                      value={newPhone}
+                      onChange={(e) => setNewPhone(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSendPhoneOtp}
+                        disabled={phoneSending || !newPhone}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                      >
+                        {phoneSending ? "Sending…" : "Send code"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChangingPhone(false);
+                          setPhoneError(null);
+                          setNewPhone("");
+                        }}
+                        className="px-4 py-2 text-gray-600 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-500">
+                      Enter the sign-in link token sent to {newPhone}
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Paste token from the link"
+                      value={phoneOtp}
+                      onChange={(e) => setPhoneOtp(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleVerifyPhone}
+                        disabled={phoneSending || !phoneOtp}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                      >
+                        {phoneSending ? "Verifying…" : "Confirm"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhoneStep("enter")}
+                        className="px-4 py-2 text-gray-600 text-sm"
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-base text-gray-600">
+                  {user.phone}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setChangingPhone(true)}
+                  className="text-sm text-blue-600 whitespace-nowrap"
+                >
+                  Change
+                </button>
+              </div>
+            )}
           </div>
           <button
             type="submit"
@@ -207,6 +387,29 @@ export default function SettingsClient({ user, passkeys }: Props) {
           </button>
         )}
       </section>
+
+      {/* Push notifications */}
+      {pushSupported && (
+        <section className="px-4 py-4 border-b border-gray-200">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            Notifications
+          </h2>
+          <p className="text-xs text-gray-500 mb-3">
+            Get notified about new chat messages and schedule changes.
+          </p>
+          <button
+            onClick={handleTogglePush}
+            disabled={pushLoading}
+            className={`px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 ${
+              pushEnabled
+                ? "bg-gray-100 text-gray-700 border border-gray-300"
+                : "border border-blue-600 text-blue-600"
+            }`}
+          >
+            {pushLoading ? "…" : pushEnabled ? "Disable notifications" : "Enable notifications"}
+          </button>
+        </section>
+      )}
 
       {/* Sign out */}
       <section className="px-4 py-4 space-y-2">

@@ -15,6 +15,20 @@
       "when": 1778499900958,
       "tag": "0001_awesome_lorna_dane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778512061156,
+      "tag": "0002_notes_editor",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778512310292,
+      "tag": "0003_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }

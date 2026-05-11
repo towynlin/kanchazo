@@ -4,6 +4,9 @@ import { requireTeamMember, requireCoach } from "@/lib/api/require-auth";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { getEventById, updateEvent, deleteEvent } from "@/lib/db/queries/events";
 import { writeAuditLog } from "@/lib/db/queries/audit-log";
+import { getTeamMembers } from "@/lib/db/queries/teams";
+import { getPushSubscriptionsForUsers } from "@/lib/db/queries/push-subscriptions";
+import { sendPushToUsers } from "@/lib/push/send";
 
 const updateSchema = z.object({
   kind: z.enum(["game", "practice"]).optional(),
@@ -40,13 +43,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<Para
     const event = await getEventById(eventId);
     if (!event || event.teamId !== teamId) return err("Not found", 404);
 
+    const notesChanged = data.notes !== undefined && data.notes !== event.notes;
     const updated = await updateEvent(eventId, {
       ...data,
       startsAt: data.startsAt ? new Date(data.startsAt) : undefined,
       endsAt: data.endsAt !== undefined ? (data.endsAt ? new Date(data.endsAt) : null) : undefined,
       updatedByUserId: auth.user.id,
+      ...(notesChanged && {
+        notesUpdatedAt: new Date(),
+        notesEditorId: auth.user.id,
+      }),
     });
-    const action = data.status === "cancelled" ? "event.cancel" : "event.update";
+    const isCancellation = data.status === "cancelled" && event.status !== "cancelled";
+    const action = isCancellation ? "event.cancel" : "event.update";
     await writeAuditLog({
       actorUserId: auth.user.id,
       teamId,
@@ -54,6 +63,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<Para
       target: `event:${eventId}`,
       payload: data,
     });
+
+    if (isCancellation) {
+      const members = await getTeamMembers(teamId);
+      const otherUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
+      if (otherUserIds.length > 0) {
+        const subs = await getPushSubscriptionsForUsers(otherUserIds);
+        if (subs.length > 0) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+          const label = event.kind === "game" ? "Game" : "Practice";
+          sendPushToUsers(subs, {
+            title: `${label} cancelled`,
+            body: `${event.location} · ${new Date(event.startsAt).toLocaleDateString()}`,
+            url: `${appUrl}/schedule`,
+          }).catch(() => {});
+        }
+      }
+    }
+
     return ok(updated);
   } catch (e) {
     return handleZodError(e);

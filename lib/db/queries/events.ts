@@ -47,6 +47,8 @@ export async function updateEvent(
       | "opponentName"
       | "isHome"
       | "notes"
+      | "notesUpdatedAt"
+      | "notesEditorId"
       | "status"
       | "updatedByUserId"
     >

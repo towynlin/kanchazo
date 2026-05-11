@@ -14,6 +14,8 @@ interface EventData {
   opponentName: string | null;
   isHome: boolean | null;
   notes: string | null;
+  notesUpdatedAt: string | null;
+  notesEditorName: string | null;
   startsAt: string;
   endsAt: string | null;
   title: string;
@@ -76,6 +78,7 @@ export default function EventDetailClient({
         body: JSON.stringify({ notes }),
       });
       setEditingNotes(false);
+      router.refresh();
     } finally {
       setSavingNotes(false);
     }
@@ -233,9 +236,21 @@ export default function EventDetailClient({
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-600 whitespace-pre-wrap">
-            {notes || <span className="text-gray-400 italic">No notes</span>}
-          </p>
+          <>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">
+              {notes || <span className="text-gray-400 italic">No notes</span>}
+            </p>
+            {event.notesUpdatedAt && event.notesEditorName && (
+              <p className="text-xs text-gray-400 mt-1">
+                Edited{" "}
+                {new Date(event.notesUpdatedAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                by {event.notesEditorName}
+              </p>
+            )}
+          </>
         )}
       </div>
 
