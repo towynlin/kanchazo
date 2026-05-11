@@ -5,15 +5,38 @@ import type { FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+const COUNTRY_CODES = [
+  { flag: "🇺🇸", label: "US / CA / PR / DO", dial: "+1", placeholder: "(555) 555-0123" },
+  { flag: "🇲🇽", label: "Mexico", dial: "+52", placeholder: "55 1234 5678" },
+  { flag: "🇧🇷", label: "Brazil", dial: "+55", placeholder: "11 91234-5678" },
+  { flag: "🇦🇷", label: "Argentina", dial: "+54", placeholder: "11 1234-5678" },
+  { flag: "🇨🇴", label: "Colombia", dial: "+57", placeholder: "300 123 4567" },
+  { flag: "🇨🇱", label: "Chile", dial: "+56", placeholder: "9 1234 5678" },
+  { flag: "🇵🇪", label: "Peru", dial: "+51", placeholder: "9 1234 5678" },
+  { flag: "🇻🇪", label: "Venezuela", dial: "+58", placeholder: "212 123 4567" },
+  { flag: "🇪🇨", label: "Ecuador", dial: "+593", placeholder: "9 1234 5678" },
+  { flag: "🇬🇹", label: "Guatemala", dial: "+502", placeholder: "1234 5678" },
+  { flag: "🇸🇻", label: "El Salvador", dial: "+503", placeholder: "7123 4567" },
+  { flag: "🇭🇳", label: "Honduras", dial: "+504", placeholder: "9123 4567" },
+  { flag: "🇳🇮", label: "Nicaragua", dial: "+505", placeholder: "8123 4567" },
+  { flag: "🇨🇷", label: "Costa Rica", dial: "+506", placeholder: "8123 4567" },
+  { flag: "🇪🇸", label: "Spain", dial: "+34", placeholder: "612 345 678" },
+  { flag: "🇬🇧", label: "UK", dial: "+44", placeholder: "7700 900123" },
+];
+
 function AuthForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const router = useRouter();
 
-  const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+1");
+  const [localPhone, setLocalPhone] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  const selectedCountry = COUNTRY_CODES.find((c) => c.dial === dialCode) ?? COUNTRY_CODES[0];
+  const fullPhone = dialCode + localPhone.replace(/\D/g, "");
 
   async function handleSendOtp(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +46,7 @@ function AuthForm() {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -84,9 +107,15 @@ function AuthForm() {
             <div className="text-4xl mb-4">📱</div>
             <h2 className="text-xl font-semibold mb-2">Check your messages</h2>
             <p className="text-gray-500 text-sm mb-6">
-              We sent a sign-in link to {phone}. It expires in 5 minutes.
+              We sent a sign-in link to {fullPhone}. It expires in 5 minutes.
             </p>
-            <button onClick={() => setSent(false)} className="text-blue-600 text-sm underline">
+            <button
+              onClick={() => {
+                setSent(false);
+                setLocalPhone("");
+              }}
+              className="text-blue-600 text-sm underline"
+            >
               Try a different number
             </button>
           </div>
@@ -112,18 +141,32 @@ function AuthForm() {
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                   Phone number
                 </label>
-                <div className="flex gap-2">
-                  <span className="flex items-center px-3 bg-gray-100 border border-gray-300 rounded-l-xl text-gray-600 text-sm">
-                    🇺🇸 +1
-                  </span>
+                <div className="flex">
+                  <select
+                    aria-label="Country code"
+                    value={dialCode}
+                    onChange={(e) => {
+                      setDialCode(e.target.value);
+                      setLocalPhone("");
+                    }}
+                    className="px-2 py-3 bg-gray-100 border border-gray-300 border-r-0 rounded-l-xl
+                               text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                               focus:border-transparent"
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.dial} value={c.dial}>
+                        {c.flag} {c.dial}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     id="phone"
                     type="tel"
                     inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="(555) 555-0123"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    autoComplete="tel-national"
+                    placeholder={selectedCountry.placeholder}
+                    value={localPhone}
+                    onChange={(e) => setLocalPhone(e.target.value)}
                     required
                     className="flex-1 px-3 py-3 border border-gray-300 rounded-r-xl text-base
                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -135,7 +178,7 @@ function AuthForm() {
 
               <button
                 type="submit"
-                disabled={loading || !phone}
+                disabled={loading || !localPhone}
                 className="w-full py-3 px-4 bg-gray-900 text-white rounded-xl font-medium text-base
                            disabled:opacity-50"
               >
