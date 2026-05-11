@@ -33,7 +33,8 @@ export async function sendMagicLink(
 }
 
 export type VerifyMagicLinkResult =
-  | { ok: true; session: Session; isNewUser: boolean; phone: string }
+  | { ok: true; rawSessionToken: string; session: Session; isNewUser: false; phone: string }
+  | { ok: true; rawSessionToken: null; session: null; isNewUser: true; phone: string }
   | { ok: false; error: string };
 
 export async function verifyMagicLink(rawToken: string): Promise<VerifyMagicLinkResult> {
@@ -47,19 +48,18 @@ export async function verifyMagicLink(rawToken: string): Promise<VerifyMagicLink
   await consumeMagicToken(magicToken.id);
 
   const user = await findUserByPhone(magicToken.phone);
-  const isNewUser = !user;
 
   if (!user) {
-    // Return the phone so the UI can prompt for name/email before creating the account
-    return { ok: true, session: null as unknown as Session, isNewUser: true, phone: magicToken.phone };
+    return { ok: true, rawSessionToken: null, session: null, isNewUser: true, phone: magicToken.phone };
   }
 
-  const session = await createSessionForUser(user.id);
-  return { ok: true, session, isNewUser: false, phone: magicToken.phone };
+  const { rawSessionToken, session } = await createSessionForUser(user.id);
+  return { ok: true, rawSessionToken, session, isNewUser: false, phone: magicToken.phone };
 }
 
-export async function createSessionForUser(userId: string): Promise<Session> {
+export async function createSessionForUser(userId: string): Promise<{ rawSessionToken: string; session: Session }> {
   const { token, hash } = generateToken();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-  return createSession({ userId, tokenHash: hash, expiresAt });
+  const session = await createSession({ userId, tokenHash: hash, expiresAt });
+  return { rawSessionToken: token, session };
 }
