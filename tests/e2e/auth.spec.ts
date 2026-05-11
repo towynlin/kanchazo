@@ -20,8 +20,9 @@ test("healthz endpoint returns ok", async ({ page }) => {
 });
 
 test("send-otp rejects unknown phone (invite gate)", async ({ page }) => {
+  // +14155550199 is a valid US number but will have no account or invitation
   const res = await page.request.post("/api/auth/send-otp", {
-    data: { phone: "+15550000000" },
+    data: { phone: "+14155550199" },
     headers: { "Content-Type": "application/json" },
   });
   expect(res.status()).toBe(403);
