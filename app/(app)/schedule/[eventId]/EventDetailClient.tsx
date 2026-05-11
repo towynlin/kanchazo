@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AvailabilitySummary } from "@/lib/domain/availability";
+import EditEventModal from "@/components/EditEventModal";
 
 interface EventData {
   id: string;
@@ -43,6 +44,7 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
   const [editingNotes, setEditingNotes] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   async function setAvail(playerId: string, status: "yes" | "no" | "maybe") {
     const prev = availability[playerId];
@@ -232,6 +234,14 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
         <div className="px-4 py-3 space-y-2">
           {!event.isCancelled && (
             <button
+              onClick={() => setShowEdit(true)}
+              className="w-full py-3 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium"
+            >
+              Edit event
+            </button>
+          )}
+          {!event.isCancelled && (
+            <button
               onClick={handleCancel}
               disabled={cancelling}
               className="w-full py-3 border border-yellow-400 text-yellow-700 rounded-xl text-sm font-medium disabled:opacity-50"
@@ -246,6 +256,24 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
             Delete event
           </button>
         </div>
+      )}
+
+      {showEdit && (
+        <EditEventModal
+          event={{
+            id: event.id,
+            teamId: event.teamId,
+            kind: event.kind as "game" | "practice",
+            startsAt: event.startsAt,
+            endsAt: event.endsAt,
+            location: event.location,
+            opponentName: event.opponentName,
+            isHome: event.isHome,
+            notes: event.notes,
+          }}
+          onSaved={() => { setShowEdit(false); router.refresh(); }}
+          onClose={() => setShowEdit(false)}
+        />
       )}
     </div>
   );
