@@ -2,18 +2,17 @@ import type { Event, Team } from "@/lib/db/schema";
 import { formatEventTitle } from "@/lib/domain/events";
 
 function icalDate(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return d
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 }
 
 function escapeIcal(s: string): string {
   return s.replace(/[\\;,]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
 }
 
-export function generateIcal(
-  events: Event[],
-  teamMap: Map<string, Team>,
-  calName: string,
-): string {
+export function generateIcal(events: Event[], teamMap: Map<string, Team>, calName: string): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

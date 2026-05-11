@@ -6,10 +6,7 @@ import { findUserById } from "@/lib/db/queries/users";
 import { generateIcal } from "@/lib/ical/generate";
 import type { Team } from "@/lib/db/schema";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   const userId = await findUserByIcalToken(token);

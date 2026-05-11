@@ -6,10 +6,7 @@ import { updateChatRead } from "@/lib/db/queries/chat";
 
 const schema = z.object({ messageId: z.string().uuid() });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;

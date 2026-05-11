@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -23,7 +24,7 @@ export default function SettingsClient({ user, passkeys }: Props) {
   const [icalUrl, setIcalUrl] = useState<string | null>(null);
   const [loadingIcal, setLoadingIcal] = useState(false);
 
-  async function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {

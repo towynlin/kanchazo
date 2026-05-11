@@ -24,20 +24,20 @@
 
 A user's role is **per team**. The same person can be a coach on team A and a regular parent on team B.
 
-| Capability | Parent | Coach | System Admin |
-|---|---|---|---|
-| View their teams' schedule, roster, chat | ✅ | ✅ | — |
-| Edit own contact info | ✅ | ✅ | ✅ |
-| Edit own players' name & availability | ✅ | ✅ | — |
-| View all players' availability on team | ✅ | ✅ | — |
-| Edit any player on the team | — | ✅ | — |
-| Create / edit / cancel events | — | ✅ | — |
-| Edit event notes | — | ✅ | — |
-| Invite co-guardian for own player | ✅ | ✅ | — |
-| Create teams | — | ✅ | — |
-| Invite coaches to a team they coach | — | ✅ | — |
-| Invite parents to a team they coach | — | ✅ | — |
-| Invite a coach for a new team (new "team owner") | — | — | ✅ |
+| Capability                                       | Parent | Coach | System Admin |
+| ------------------------------------------------ | ------ | ----- | ------------ |
+| View their teams' schedule, roster, chat         | ✅     | ✅    | —            |
+| Edit own contact info                            | ✅     | ✅    | ✅           |
+| Edit own players' name & availability            | ✅     | ✅    | —            |
+| View all players' availability on team           | ✅     | ✅    | —            |
+| Edit any player on the team                      | —      | ✅    | —            |
+| Create / edit / cancel events                    | —      | ✅    | —            |
+| Edit event notes                                 | —      | ✅    | —            |
+| Invite co-guardian for own player                | ✅     | ✅    | —            |
+| Create teams                                     | —      | ✅    | —            |
+| Invite coaches to a team they coach              | —      | ✅    | —            |
+| Invite parents to a team they coach              | —      | ✅    | —            |
+| Invite a coach for a new team (new "team owner") | —      | —     | ✅           |
 
 ## 4. Data model (logical)
 
@@ -68,6 +68,7 @@ Session                 id, user_id, token_hash, created_at, expires_at, last_se
 ```
 
 Constraints:
+
 - Phone numbers are stored normalized E.164; uniqueness on `User.phone`.
 - A `Player` always belongs to exactly one `Team` and has at least one `PlayerGuardian`.
 - Deleting a team hard-deletes all its events, players, memberships, chat. Document this; require typed confirmation.
@@ -75,6 +76,7 @@ Constraints:
 ## 5. Authentication
 
 ### 5.1 SMS magic link
+
 1. User enters phone number. UI shows country code picker; default to US.
 2. Server normalizes to E.164, looks up the user. If no user exists with that phone, only proceed if a valid unused `Invitation` matches.
 3. Server rate-limits per phone (≤1 send / 30s, ≤5 / hour) and per IP.
@@ -83,18 +85,21 @@ Constraints:
 6. Session set as HTTP-only, Secure, SameSite=Lax cookie. Default 30-day rolling expiry.
 
 ### 5.2 Passkeys
+
 - Offered immediately after first successful SMS login, and from a Settings screen.
 - Use WebAuthn via `@simplewebauthn/server` + `@simplewebauthn/browser`.
 - A user may register multiple passkeys (one per device).
 - On subsequent visits, passkey is the primary CTA; "Send me a code" is the fallback.
 
 ### 5.3 Sessions
+
 - Server-side session table; cookie carries opaque session id.
 - "Sign out everywhere" button in Settings invalidates all sessions for the user.
 
 ## 6. Screens & flows
 
 ### 6.1 Persistent team header
+
 - Always visible at the top: the **current team name** and a small chevron.
 - Tap the header → bottom sheet listing all the user's teams → tap to switch.
 - If the user has only one team: header still shows the team name, chevron is hidden.
@@ -164,17 +169,20 @@ A vertical, scrollable list of events for the current team.
 ## 7. Invitations & onboarding
 
 ### 7.1 Invite types
+
 - **System admin → coach (new team owner).** CLI in v1; creates an `Invitation` with `team_id = null`, `invited_role = coach`. On accept, the new coach is prompted to create their first team.
 - **Coach → coach (same team).** In-app form on the team's roster page.
 - **Coach → parent (their team).** In-app form on the team's roster page. Fields: parent's name, phone or email, and one or more **player names** to associate. Player rows are created on invite send so the roster reflects them immediately; if the invite expires unused, the orphan players remain visible to the coach with a "pending guardian" badge and a resend action.
 - **Parent → parent (co-guardian for own player).** From a player's profile, "Add another guardian": choose the player(s) to share, enter the new guardian's contact, send.
 
 ### 7.2 Invitation tokens
+
 - 32 random bytes, base64url-encoded in the link, stored as `sha256(token)`.
 - 7-day expiry by default; single use.
 - Resending an invite issues a fresh token and invalidates the old one.
 
 ### 7.3 First-time signup from invite
+
 1. User taps SMS link → enters phone (pre-filled if provided in invite) → SMS verification.
 2. If a `User` already exists with this phone, the membership is added to that account.
 3. Otherwise, account is created. Prompt for name and email. Add team membership and link to any pre-created players.
@@ -208,6 +216,7 @@ I'm picking concrete choices so Claude Code has clear marching orders. Override 
   - **Fly.io** — Docker-native, has Postgres, region flexibility.
 
 ### 9.1 Why a PWA, not React Native, in v1
+
 A PWA covers the brief: schedule, roster, availability taps, chat, push (iOS 16.4+). When you later want App Store presence and richer native integration, wrap the same web app with **Capacitor** (smallest jump) or rebuild key screens in **Expo / React Native**. Keep components platform-neutral (no heavy DOM-specific deps in domain code) to ease that path.
 
 ## 10. Security & privacy

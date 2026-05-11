@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import type { FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function OnboardForm() {
@@ -13,7 +14,7 @@ function OnboardForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -94,7 +95,9 @@ function OnboardForm() {
 
 export default function OnboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+    <Suspense
+      fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}
+    >
       <OnboardForm />
     </Suspense>
   );

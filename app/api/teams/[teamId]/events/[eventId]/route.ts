@@ -18,10 +18,7 @@ const updateSchema = z.object({
 
 type Params = { teamId: string; eventId: string };
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<Params> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<Params> }) {
   const { teamId, eventId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;
@@ -31,10 +28,7 @@ export async function GET(
   return ok(event);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<Params> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<Params> }) {
   const { teamId, eventId } = await params;
   const auth = await requireCoach(teamId);
   if (!auth.ok) return auth.response;
@@ -66,10 +60,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<Params> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<Params> }) {
   const { teamId, eventId } = await params;
   const auth = await requireCoach(teamId);
   if (!auth.ok) return auth.response;

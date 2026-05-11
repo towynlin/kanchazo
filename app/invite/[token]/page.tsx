@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import type { FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 interface InviteInfo {
@@ -34,7 +35,7 @@ function InvitePageContent() {
       .catch((e) => setLoadError(e.message));
   }, [token]);
 
-  async function handleAccept(e: React.FormEvent) {
+  async function handleAccept(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setSubmitError(null);
@@ -92,7 +93,8 @@ function InvitePageContent() {
           <div className="text-5xl mb-3">🏆</div>
           <h1 className="text-2xl font-bold mb-1">You're invited!</h1>
           <p className="text-gray-500 text-sm">
-            Join Kanchazo as a {roleLabel}{teamLabel}.
+            Join Kanchazo as a {roleLabel}
+            {teamLabel}.
           </p>
         </div>
 
@@ -148,7 +150,9 @@ function InvitePageContent() {
 
 export default function InvitePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+    <Suspense
+      fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}
+    >
       <InvitePageContent />
     </Suspense>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 
 interface Props {
   teamId: string;
@@ -29,7 +30,7 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
     setPlayerNames((p) => p.map((n, idx) => (idx === i ? val : n)));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -63,16 +64,20 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
       <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl z-30 max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-base font-semibold">Invite someone</h2>
-          <button onClick={onClose} className="text-gray-400 text-xl leading-none min-h-0" style={{ minHeight: "auto" }}>✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 text-xl leading-none min-h-0"
+            style={{ minHeight: "auto" }}
+          >
+            ✕
+          </button>
         </div>
 
         {sent ? (
           <div className="p-6 text-center">
             <div className="text-4xl mb-3">✉️</div>
             <p className="font-medium text-gray-900 mb-1">Invite sent!</p>
-            <p className="text-sm text-gray-500 mb-4">
-              They'll receive a link to join the team.
-            </p>
+            <p className="text-sm text-gray-500 mb-4">They'll receive a link to join the team.</p>
             <button
               onClick={onInvited}
               className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium"

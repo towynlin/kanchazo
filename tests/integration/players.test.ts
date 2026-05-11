@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { createUser } from "@/lib/db/queries/users";
 import { createTeam } from "@/lib/db/queries/teams";
-import { createPlayer, getTeamPlayers, getPlayersByGuardian, addGuardian } from "@/lib/db/queries/players";
+import {
+  createPlayer,
+  getTeamPlayers,
+  getPlayersByGuardian,
+  addGuardian,
+} from "@/lib/db/queries/players";
 
 function rando() {
   return `+1415555${Math.floor(Math.random() * 9000 + 1000)}`;

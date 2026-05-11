@@ -5,10 +5,7 @@ import { db } from "@/lib/db/client";
 import { passkeys } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;

@@ -3,9 +3,9 @@ import { countRecentMagicTokens } from "@/lib/db/queries/magic-tokens";
 const SMS_PER_30S = 1;
 const SMS_PER_HOUR = 5;
 
-export async function checkSmsRateLimit(phone: string): Promise<
-  { allowed: true } | { allowed: false; reason: string }
-> {
+export async function checkSmsRateLimit(
+  phone: string,
+): Promise<{ allowed: true } | { allowed: false; reason: string }> {
   const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 

@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { createUser } from "@/lib/db/queries/users";
-import { createTeam, getTeamsByUser, addTeamMember, getTeamMembers, getTeamMembership } from "@/lib/db/queries/teams";
+import {
+  createTeam,
+  getTeamsByUser,
+  addTeamMember,
+  getTeamMembers,
+  getTeamMembership,
+} from "@/lib/db/queries/teams";
 
 describe("teams queries", () => {
   it("creates a team", async () => {

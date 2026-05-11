@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { FormEvent } from "react";
 
 interface Message {
   id: string;
@@ -32,10 +33,21 @@ function formatTime(iso: string): string {
   if (isToday) {
     return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   }
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
-export default function ChatClient({ teamId, userId, userName, initialMessages, lastReadMessageId }: Props) {
+export default function ChatClient({
+  teamId,
+  userId,
+  userName,
+  initialMessages,
+  lastReadMessageId,
+}: Props) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -66,9 +78,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
   }, [messages, teamId]);
 
   // Ref to track the latest message ID for missed-message reconciliation
-  const latestMessageIdRef = useRef<string | null>(
-    initialMessages.at(-1)?.id ?? null,
-  );
+  const latestMessageIdRef = useRef<string | null>(initialMessages.at(-1)?.id ?? null);
   useEffect(() => {
     const last = messages.filter((m) => !m.id.startsWith("opt-")).at(-1);
     if (last) latestMessageIdRef.current = last.id;
@@ -79,9 +89,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
     const since = latestMessageIdRef.current;
     if (!since) return;
     try {
-      const res = await fetch(
-        `/api/teams/${teamId}/messages?since=${encodeURIComponent(since)}`,
-      );
+      const res = await fetch(`/api/teams/${teamId}/messages?since=${encodeURIComponent(since)}`);
       if (!res.ok) return;
       const missed: Array<Message & { senderUserId: string }> = await res.json();
       if (missed.length === 0) return;
@@ -109,10 +117,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data) as Message & { senderUserId: string };
-          setMessages((prev) => [
-            ...prev,
-            { ...msg, isMe: msg.senderUserId === userId },
-          ]);
+          setMessages((prev) => [...prev, { ...msg, isMe: msg.senderUserId === userId }]);
         } catch {
           // ignore malformed messages
         }
@@ -140,7 +145,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
     };
   }, [teamId, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleSend(e: React.FormEvent) {
+  async function handleSend(e: FormEvent) {
     e.preventDefault();
     if (!body.trim() || sending) return;
 
@@ -182,9 +187,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-gray-400 text-sm mt-8">
-            No messages yet. Say hi! 👋
-          </div>
+          <div className="text-center text-gray-400 text-sm mt-8">No messages yet. Say hi! 👋</div>
         )}
         {messages.map((msg, i) => {
           const isFirstUnread =
@@ -193,33 +196,35 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
             messages[i - 1].id === newMessageDividerAfter &&
             msg.id !== newMessageDividerAfter &&
             !msg.id.startsWith("opt-");
-          return <div key={msg.id}>
-          {isFirstUnread && (
-            <div className="flex items-center gap-2 my-3 px-2">
-              <div className="flex-1 h-px bg-blue-200" />
-              <span className="text-xs text-blue-500 font-medium shrink-0">New messages</span>
-              <div className="flex-1 h-px bg-blue-200" />
-            </div>
-          )}
-          <div
-            className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}
-          >
-            <div className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}>
-              {!msg.isMe && (
-                <span className="text-xs text-gray-500 px-1">{msg.senderName}</span>
+          return (
+            <div key={msg.id}>
+              {isFirstUnread && (
+                <div className="flex items-center gap-2 my-3 px-2">
+                  <div className="flex-1 h-px bg-blue-200" />
+                  <span className="text-xs text-blue-500 font-medium shrink-0">New messages</span>
+                  <div className="flex-1 h-px bg-blue-200" />
+                </div>
               )}
-              <div
-                className={`px-3 py-2 rounded-2xl text-sm chat-body ${
-                  msg.isMe
-                    ? "bg-blue-600 text-white rounded-br-sm"
-                    : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                }`}
-                dangerouslySetInnerHTML={{ __html: linkify(msg.body) }}
-              />
-              <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.sentAt)}</span>
+              <div className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}
+                >
+                  {!msg.isMe && (
+                    <span className="text-xs text-gray-500 px-1">{msg.senderName}</span>
+                  )}
+                  <div
+                    className={`px-3 py-2 rounded-2xl text-sm chat-body ${
+                      msg.isMe
+                        ? "bg-blue-600 text-white rounded-br-sm"
+                        : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: linkify(msg.body) }}
+                  />
+                  <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.sentAt)}</span>
+                </div>
+              </div>
             </div>
-          </div>
-          </div>;
+          );
         })}
         <div ref={bottomRef} />
       </div>
@@ -235,7 +240,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              handleSend(e as unknown as React.FormEvent);
+              handleSend(e as unknown as FormEvent);
             }
           }}
           placeholder="Message…"

@@ -81,28 +81,31 @@ export function attachWebSocketServer(server: Server) {
     });
   });
 
-  wss.on("connection", async (ws: WebSocket, _req: IncomingMessage, userId: string, teamId: string) => {
-    const conn: TeamSocket = { ws, userId, teamId };
-    const teamConns = getConnectionsForTeam(teamId);
-    teamConns.add(conn);
+  wss.on(
+    "connection",
+    async (ws: WebSocket, _req: IncomingMessage, userId: string, teamId: string) => {
+      const conn: TeamSocket = { ws, userId, teamId };
+      const teamConns = getConnectionsForTeam(teamId);
+      teamConns.add(conn);
 
-    // Subscribe to this team's Postgres channel if not already
-    const channel = `chat:${teamId}`;
-    try {
-      await startPgListener();
-      await pgClient?.query(`LISTEN "${channel}"`);
-    } catch {
-      // Non-fatal; messages still flow via POST
-    }
+      // Subscribe to this team's Postgres channel if not already
+      const channel = `chat:${teamId}`;
+      try {
+        await startPgListener();
+        await pgClient?.query(`LISTEN "${channel}"`);
+      } catch {
+        // Non-fatal; messages still flow via POST
+      }
 
-    ws.on("close", () => {
-      teamConns.delete(conn);
-    });
+      ws.on("close", () => {
+        teamConns.delete(conn);
+      });
 
-    ws.on("error", () => {
-      teamConns.delete(conn);
-    });
-  });
+      ws.on("error", () => {
+        teamConns.delete(conn);
+      });
+    },
+  );
 
   return wss;
 }

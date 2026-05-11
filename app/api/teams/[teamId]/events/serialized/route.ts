@@ -5,10 +5,7 @@ import { getTeamEvents } from "@/lib/db/queries/events";
 import { getTeamById } from "@/lib/db/queries/teams";
 import { formatEventDate, formatEventTitle, formatEventTimeRange } from "@/lib/domain/events";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;

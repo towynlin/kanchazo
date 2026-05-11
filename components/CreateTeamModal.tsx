@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 const TIME_ZONES = [
@@ -29,7 +30,7 @@ export default function CreateTeamModal({ onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -57,7 +58,13 @@ export default function CreateTeamModal({ onClose }: Props) {
       <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl z-30 max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-base font-semibold">Create a team</h2>
-          <button onClick={onClose} className="text-gray-400 text-xl leading-none min-h-0" style={{ minHeight: "auto" }}>✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 text-xl leading-none min-h-0"
+            style={{ minHeight: "auto" }}
+          >
+            ✕
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4 pb-8">
           <div>
@@ -82,7 +89,9 @@ export default function CreateTeamModal({ onClose }: Props) {
                          focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {TIME_ZONES.map((tz) => (
-                <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+                <option key={tz} value={tz}>
+                  {tz.replace(/_/g, " ")}
+                </option>
               ))}
             </select>
           </div>

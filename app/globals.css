@@ -27,7 +27,10 @@ body {
 }
 
 /* Minimum 44×44 tap targets */
-button, a, [role="button"], [role="tab"] {
+button,
+a,
+[role="button"],
+[role="tab"] {
   min-height: 44px;
   display: inline-flex;
   align-items: center;

@@ -23,9 +23,7 @@ export function isPastEvent(event: EventTiming): boolean {
 export function formatEventTitle(event: EventTitle): string {
   if (event.kind === "practice") return "Practice";
   if (!event.opponentName) return "Game";
-  return event.isHome
-    ? `vs ${event.opponentName} (Home)`
-    : `@ ${event.opponentName} (Away)`;
+  return event.isHome ? `vs ${event.opponentName} (Home)` : `@ ${event.opponentName} (Away)`;
 }
 
 export function formatEventTimeRange(

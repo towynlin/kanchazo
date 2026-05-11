@@ -39,12 +39,5 @@ export default async function RosterPage() {
   const coaches = sortByName(membersWithPlayers.filter((m) => m.role === "coach"));
   const parents = sortByName(membersWithPlayers.filter((m) => m.role === "parent"));
 
-  return (
-    <RosterClient
-      teamId={team.id}
-      isCoach={isCoach}
-      coaches={coaches}
-      parents={parents}
-    />
-  );
+  return <RosterClient teamId={team.id} isCoach={isCoach} coaches={coaches} parents={parents} />;
 }

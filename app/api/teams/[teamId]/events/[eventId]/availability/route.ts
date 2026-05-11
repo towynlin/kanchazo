@@ -13,10 +13,7 @@ const schema = z.object({
 
 type Params = { teamId: string; eventId: string };
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<Params> },
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<Params> }) {
   const { teamId, eventId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;

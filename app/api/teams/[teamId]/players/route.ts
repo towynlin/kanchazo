@@ -8,10 +8,7 @@ const createSchema = z.object({
   name: z.string().min(1).max(100),
 });
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;
@@ -20,10 +17,7 @@ export async function GET(
   return ok(players);
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireCoach(teamId);
   if (!auth.ok) return auth.response;

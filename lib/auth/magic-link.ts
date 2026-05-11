@@ -1,6 +1,10 @@
 import { generateToken, hashToken } from "./tokens";
 import { checkSmsRateLimit } from "./rate-limit";
-import { createMagicToken, findUnusedMagicToken, consumeMagicToken } from "@/lib/db/queries/magic-tokens";
+import {
+  createMagicToken,
+  findUnusedMagicToken,
+  consumeMagicToken,
+} from "@/lib/db/queries/magic-tokens";
 import { findUserByPhone } from "@/lib/db/queries/users";
 import { createSession } from "@/lib/db/queries/sessions";
 import type { SmsProvider } from "@/lib/sms/interface";
@@ -50,14 +54,22 @@ export async function verifyMagicLink(rawToken: string): Promise<VerifyMagicLink
   const user = await findUserByPhone(magicToken.phone);
 
   if (!user) {
-    return { ok: true, rawSessionToken: null, session: null, isNewUser: true, phone: magicToken.phone };
+    return {
+      ok: true,
+      rawSessionToken: null,
+      session: null,
+      isNewUser: true,
+      phone: magicToken.phone,
+    };
   }
 
   const { rawSessionToken, session } = await createSessionForUser(user.id);
   return { ok: true, rawSessionToken, session, isNewUser: false, phone: magicToken.phone };
 }
 
-export async function createSessionForUser(userId: string): Promise<{ rawSessionToken: string; session: Session }> {
+export async function createSessionForUser(
+  userId: string,
+): Promise<{ rawSessionToken: string; session: Session }> {
   const { token, hash } = generateToken();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
   const session = await createSession({ userId, tokenHash: hash, expiresAt });

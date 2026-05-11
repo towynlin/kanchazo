@@ -6,10 +6,7 @@ import { writeAuditLog } from "@/lib/db/queries/audit-log";
 
 type Params = { teamId: string; userId: string };
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<Params> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<Params> }) {
   const { teamId, userId } = await params;
   const auth = await requireCoach(teamId);
   if (!auth.ok) return auth.response;

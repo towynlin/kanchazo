@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -14,7 +15,7 @@ function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function handleSendOtp(e: React.FormEvent) {
+  async function handleSendOtp(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setErr(null);
@@ -85,10 +86,7 @@ function AuthForm() {
             <p className="text-gray-500 text-sm mb-6">
               We sent a sign-in link to {phone}. It expires in 5 minutes.
             </p>
-            <button
-              onClick={() => setSent(false)}
-              className="text-blue-600 text-sm underline"
-            >
+            <button onClick={() => setSent(false)} className="text-blue-600 text-sm underline">
               Try a different number
             </button>
           </div>
@@ -133,9 +131,7 @@ function AuthForm() {
                 </div>
               </div>
 
-              {err && (
-                <p className="text-red-600 text-sm">{err}</p>
-              )}
+              {err && <p className="text-red-600 text-sm">{err}</p>}
 
               <button
                 type="submit"
@@ -155,7 +151,9 @@ function AuthForm() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+    <Suspense
+      fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}
+    >
       <AuthForm />
     </Suspense>
   );

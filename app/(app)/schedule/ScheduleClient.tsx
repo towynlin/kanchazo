@@ -63,14 +63,11 @@ export default function ScheduleClient({
       setOptimisticPending((s) => new Set(s).add(key));
 
       try {
-        const res = await fetch(
-          `/api/teams/${teamId}/events/${eventId}/availability`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ playerId, status }),
-          },
-        );
+        const res = await fetch(`/api/teams/${teamId}/events/${eventId}/availability`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId, status }),
+        });
         if (!res.ok) throw new Error("Failed");
       } catch {
         // Rollback
@@ -119,15 +116,16 @@ export default function ScheduleClient({
         <div className="flex flex-col items-center justify-center h-full p-8 text-center">
           <div className="text-5xl mb-4">📅</div>
           <h2 className="text-xl font-semibold mb-2">No upcoming events</h2>
-          {isCoach && (
-            <p className="text-gray-500 text-sm">Tap + to add a practice or game.</p>
-          )}
+          {isCoach && <p className="text-gray-500 text-sm">Tap + to add a practice or game.</p>}
         </div>
         {isCoach && <CoachFab onClick={() => setShowCreate(true)} />}
         {showCreate && (
           <CreateEventModal
             teamId={teamId}
-            onCreated={() => { setShowCreate(false); router.refresh(); }}
+            onCreated={() => {
+              setShowCreate(false);
+              router.refresh();
+            }}
             onClose={() => setShowCreate(false)}
           />
         )}
@@ -165,9 +163,7 @@ export default function ScheduleClient({
                 myPlayers={myPlayers}
                 availability={availability[event.id] ?? {}}
                 onSetAvail={(playerId, status) => setAvail(event.id, playerId, status)}
-                pending={myPlayers.some((p) =>
-                  optimisticPending.has(`${event.id}:${p.id}`),
-                )}
+                pending={myPlayers.some((p) => optimisticPending.has(`${event.id}:${p.id}`))}
               />
             ))}
           </div>
@@ -177,7 +173,10 @@ export default function ScheduleClient({
       {showCreate && (
         <CreateEventModal
           teamId={teamId}
-          onCreated={() => { setShowCreate(false); router.refresh(); }}
+          onCreated={() => {
+            setShowCreate(false);
+            router.refresh();
+          }}
           onClose={() => setShowCreate(false)}
         />
       )}
@@ -213,14 +212,8 @@ function EventRow({
   const isCancelled = event.status === "cancelled";
 
   return (
-    <div
-      className={`border-b border-gray-100 px-4 py-3 ${isCancelled ? "opacity-60" : ""}`}
-    >
-      <Link
-        href={`/schedule/${event.id}`}
-        className="block min-h-0"
-        style={{ minHeight: "auto" }}
-      >
+    <div className={`border-b border-gray-100 px-4 py-3 ${isCancelled ? "opacity-60" : ""}`}>
+      <Link href={`/schedule/${event.id}`} className="block min-h-0" style={{ minHeight: "auto" }}>
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 flex-wrap">

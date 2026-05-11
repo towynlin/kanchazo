@@ -17,9 +17,7 @@ export default function NoTeamState({ canCreateTeam }: Props) {
         <h2 className="text-xl font-semibold mb-2">No teams yet</h2>
         {canCreateTeam ? (
           <>
-            <p className="text-gray-500 text-sm mb-6">
-              Create your first team to get started.
-            </p>
+            <p className="text-gray-500 text-sm mb-6">Create your first team to get started.</p>
             <button
               onClick={() => setShowCreate(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium"

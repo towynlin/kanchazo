@@ -64,10 +64,7 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberWithUser
 }
 
 export async function removeTeamMember(teamId: string, userId: string): Promise<void> {
-  const results = await db
-    .select()
-    .from(teamMemberships)
-    .where(eq(teamMemberships.teamId, teamId));
+  const results = await db.select().from(teamMemberships).where(eq(teamMemberships.teamId, teamId));
   const membership = results.find((m) => m.userId === userId);
   if (membership) {
     await db.delete(teamMemberships).where(eq(teamMemberships.id, membership.id));

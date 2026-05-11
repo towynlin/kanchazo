@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 
 import { useState, createContext, useContext } from "react";
 import Link from "next/link";
@@ -26,14 +27,18 @@ interface Props {
   teams: Team[];
   initialTeamId?: string;
   chatUnread?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export default function AppShell({ user, teams, initialTeamId, chatUnread = false, children }: Props) {
+export default function AppShell({
+  user,
+  teams,
+  initialTeamId,
+  chatUnread = false,
+  children,
+}: Props) {
   const router = useRouter();
-  const [currentTeamId, setCurrentTeamId] = useState<string>(
-    initialTeamId ?? teams[0]?.id ?? "",
-  );
+  const [currentTeamId, setCurrentTeamId] = useState<string>(initialTeamId ?? teams[0]?.id ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
   const pathname = usePathname();
 
@@ -53,9 +58,7 @@ export default function AppShell({ user, teams, initialTeamId, chatUnread = fals
   ];
 
   return (
-    <TeamContext.Provider
-      value={{ currentTeam, setCurrentTeamId: handleTeamSwitch, teams }}
-    >
+    <TeamContext.Provider value={{ currentTeam, setCurrentTeamId: handleTeamSwitch, teams }}>
       <div className="flex flex-col h-screen max-w-lg mx-auto bg-white">
         {/* Team header */}
         <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
@@ -105,10 +108,7 @@ export default function AppShell({ user, teams, initialTeamId, chatUnread = fals
         {/* Team selector bottom sheet */}
         {sheetOpen && (
           <>
-            <div
-              className="fixed inset-0 bg-black/50 z-20"
-              onClick={() => setSheetOpen(false)}
-            />
+            <div className="fixed inset-0 bg-black/50 z-20" onClick={() => setSheetOpen(false)} />
             <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl z-30 pb-safe">
               <div className="p-4 border-b border-gray-100">
                 <h2 className="text-base font-semibold text-center">Switch team</h2>

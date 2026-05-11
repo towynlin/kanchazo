@@ -32,10 +32,7 @@ export async function updatePlayer(
 }
 
 export async function addGuardian(playerId: string, userId: string): Promise<void> {
-  await db
-    .insert(playerGuardians)
-    .values({ playerId, userId })
-    .onConflictDoNothing();
+  await db.insert(playerGuardians).values({ playerId, userId }).onConflictDoNothing();
 }
 
 export async function removeGuardian(playerId: string, userId: string): Promise<void> {

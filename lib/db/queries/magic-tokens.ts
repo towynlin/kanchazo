@@ -31,10 +31,7 @@ export async function consumeMagicToken(id: string): Promise<void> {
   await db.update(magicTokens).set({ usedAt: new Date() }).where(eq(magicTokens.id, id));
 }
 
-export async function countRecentMagicTokens(
-  phone: string,
-  since: Date,
-): Promise<number> {
+export async function countRecentMagicTokens(phone: string, since: Date): Promise<number> {
   const results = await db
     .select()
     .from(magicTokens)

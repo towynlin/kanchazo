@@ -9,10 +9,7 @@ import { checkChatRateLimit } from "@/lib/auth/chat-rate-limit";
 
 const sendSchema = z.object({ body: z.string().min(1).max(4000) });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;
@@ -31,10 +28,7 @@ export async function GET(
   return ok(messages);
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;

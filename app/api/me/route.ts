@@ -12,7 +12,12 @@ const schema = z.object({
 export async function GET() {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  return ok({ id: auth.user.id, name: auth.user.name, email: auth.user.email, phone: auth.user.phone });
+  return ok({
+    id: auth.user.id,
+    name: auth.user.name,
+    email: auth.user.email,
+    phone: auth.user.phone,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

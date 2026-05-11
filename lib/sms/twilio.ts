@@ -15,9 +15,7 @@ export class TwilioSmsProvider implements SmsProvider {
   }
 
   private async send(to: string, body: string): Promise<void> {
-    const credentials = Buffer.from(`${this.accountSid}:${this.authToken}`).toString(
-      "base64",
-    );
+    const credentials = Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64");
     const response = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`,
       {
@@ -40,9 +38,6 @@ export class TwilioSmsProvider implements SmsProvider {
   }
 
   async sendInvite(phone: string, inviterName: string, url: string): Promise<void> {
-    await this.send(
-      phone,
-      `${inviterName} invited you to join their team on Kanchazo: ${url}`,
-    );
+    await this.send(phone, `${inviterName} invited you to join their team on Kanchazo: ${url}`);
   }
 }

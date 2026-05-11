@@ -7,9 +7,7 @@ import type { Session, User } from "@/lib/db/schema";
 const SESSION_COOKIE = "kanchazo_session";
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days rolling
 
-export async function getSessionAndUser(): Promise<
-  { session: Session; user: User } | null
-> {
+export async function getSessionAndUser(): Promise<{ session: Session; user: User } | null> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE)?.value;
   if (!raw) return null;

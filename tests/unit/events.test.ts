@@ -35,21 +35,19 @@ describe("formatEventTitle", () => {
   });
 
   it("formats home game", () => {
-    expect(
-      formatEventTitle({ kind: "game", opponentName: "Eagles", isHome: true }),
-    ).toBe("vs Eagles (Home)");
+    expect(formatEventTitle({ kind: "game", opponentName: "Eagles", isHome: true })).toBe(
+      "vs Eagles (Home)",
+    );
   });
 
   it("formats away game", () => {
-    expect(
-      formatEventTitle({ kind: "game", opponentName: "Bears", isHome: false }),
-    ).toBe("@ Bears (Away)");
+    expect(formatEventTitle({ kind: "game", opponentName: "Bears", isHome: false })).toBe(
+      "@ Bears (Away)",
+    );
   });
 
   it("formats game with no opponent", () => {
-    expect(formatEventTitle({ kind: "game", opponentName: null, isHome: null })).toBe(
-      "Game",
-    );
+    expect(formatEventTitle({ kind: "game", opponentName: null, isHome: null })).toBe("Game");
   });
 });
 

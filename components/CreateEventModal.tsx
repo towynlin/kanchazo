@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 
 interface Props {
   teamId: string;
@@ -19,7 +20,7 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -54,7 +55,13 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
       <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl z-30 max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-base font-semibold">New event</h2>
-          <button onClick={onClose} className="text-gray-400 text-xl leading-none min-h-0" style={{ minHeight: "auto" }}>✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 text-xl leading-none min-h-0"
+            style={{ minHeight: "auto" }}
+          >
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4 pb-8">
@@ -132,7 +139,9 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location type
+                </label>
                 <div className="flex rounded-xl overflow-hidden border border-gray-200">
                   {([true, false, null] as const).map((v) => (
                     <button
