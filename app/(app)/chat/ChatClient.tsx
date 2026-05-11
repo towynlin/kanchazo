@@ -50,6 +50,18 @@ export default function ChatClient({ teamId, userId, userName, initialMessages }
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // Mark latest message as read whenever messages change
+  useEffect(() => {
+    const last = messages.at(-1);
+    if (last && !last.id.startsWith("opt-")) {
+      fetch(`/api/teams/${teamId}/messages/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: last.id }),
+      }).catch(() => {});
+    }
+  }, [messages, teamId]);
+
   // WebSocket connection with exponential backoff reconnect
   useEffect(() => {
     let attempts = 0;

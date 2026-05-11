@@ -25,10 +25,11 @@ interface Props {
   user: User;
   teams: Team[];
   initialTeamId?: string;
+  chatUnread?: boolean;
   children: React.ReactNode;
 }
 
-export default function AppShell({ user, teams, initialTeamId, children }: Props) {
+export default function AppShell({ user, teams, initialTeamId, chatUnread = false, children }: Props) {
   const router = useRouter();
   const [currentTeamId, setCurrentTeamId] = useState<string>(
     initialTeamId ?? teams[0]?.id ?? "",
@@ -46,9 +47,9 @@ export default function AppShell({ user, teams, initialTeamId, children }: Props
   }
 
   const tabs = [
-    { href: "/schedule", label: "Schedule", icon: "📅" },
-    { href: "/roster", label: "Roster", icon: "👥" },
-    { href: "/chat", label: "Chat", icon: "💬" },
+    { href: "/schedule", label: "Schedule", icon: "📅", badge: false },
+    { href: "/roster", label: "Roster", icon: "👥", badge: false },
+    { href: "/chat", label: "Chat", icon: "💬", badge: chatUnread },
   ];
 
   return (
@@ -80,7 +81,7 @@ export default function AppShell({ user, teams, initialTeamId, children }: Props
 
         {/* Bottom navigation */}
         <nav className="border-t border-gray-200 bg-white flex">
-          {tabs.map(({ href, label, icon }) => {
+          {tabs.map(({ href, label, icon, badge }) => {
             const active = pathname.startsWith(href);
             return (
               <Link
@@ -89,7 +90,12 @@ export default function AppShell({ user, teams, initialTeamId, children }: Props
                 className={`flex-1 flex flex-col items-center justify-center py-2 text-xs gap-1 min-h-[56px]
                   ${active ? "text-blue-600" : "text-gray-500"}`}
               >
-                <span className="text-xl">{icon}</span>
+                <span className="relative text-xl">
+                  {icon}
+                  {badge && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
+                </span>
                 <span>{label}</span>
               </Link>
             );
