@@ -26,7 +26,7 @@ export default async function ChatPage() {
 
   const serialized = messages.map((m) => ({
     id: m.id,
-    senderName: m.senderName ?? "Unknown",
+    senderName: m.senderName,
     body: m.body,
     sentAt: m.sentAt.toISOString(),
     isMe: m.senderUserId === auth.user.id,

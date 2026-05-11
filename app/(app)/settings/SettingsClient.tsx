@@ -412,7 +412,7 @@ export default function SettingsClient({ user, passkeys }: Props) {
       )}
 
       {/* Sign out */}
-      <section className="px-4 py-4 space-y-2">
+      <section className="px-4 py-4 border-b border-gray-200 space-y-2">
         <button
           onClick={() => handleSignOut(false)}
           className="w-full py-3 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium"
@@ -424,6 +424,32 @@ export default function SettingsClient({ user, passkeys }: Props) {
           className="w-full py-3 text-red-600 text-sm font-medium"
         >
           Sign out everywhere
+        </button>
+      </section>
+
+      {/* Delete account */}
+      <section className="px-4 py-4 space-y-2">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          Danger zone
+        </h2>
+        <p className="text-xs text-gray-500">
+          Permanently deletes your account. Your chat messages will be anonymized. This cannot be
+          undone.
+        </p>
+        <button
+          onClick={async () => {
+            const typed = prompt('Type "delete my account" to confirm');
+            if (typed !== "delete my account") return;
+            const res = await fetch("/api/me", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ confirm: "delete my account" }),
+            });
+            if (res.ok) router.push("/auth");
+          }}
+          className="w-full py-3 border border-red-300 text-red-600 rounded-xl text-sm font-medium"
+        >
+          Delete my account
         </button>
       </section>
     </div>

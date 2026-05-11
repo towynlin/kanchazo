@@ -5,7 +5,7 @@ import type { FormEvent } from "react";
 
 interface Message {
   id: string;
-  senderName: string;
+  senderName: string | null;
   body: string;
   sentAt: string;
   isMe: boolean;
@@ -210,7 +210,9 @@ export default function ChatClient({
                   className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}
                 >
                   {!msg.isMe && (
-                    <span className="text-xs text-gray-500 px-1">{msg.senderName}</span>
+                    <span className="text-xs text-gray-500 px-1">
+                      {msg.senderName ?? "Former member"}
+                    </span>
                   )}
                   <div
                     className={`px-3 py-2 rounded-2xl text-sm chat-body ${
