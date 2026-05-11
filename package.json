@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "tsx server.ts",
+    "build": "next build && esbuild server.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server.js --packages=external",
+    "start": "NODE_ENV=production node server.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",

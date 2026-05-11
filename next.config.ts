@@ -24,7 +24,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   serverExternalPackages: ["pg", "pino"],
   async headers() {
     return [

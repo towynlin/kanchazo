@@ -1,3 +1,5 @@
+// Must be first — sets globalThis.AsyncLocalStorage and globalThis.WebSocket
+import "next/dist/server/node-environment-baseline";
 import { createServer } from "http";
 import next from "next";
 import { attachWebSocketServer } from "./lib/realtime/server";

@@ -52,6 +52,6 @@ export default [
     },
   },
   {
-    ignores: [".next/**", "node_modules/**", "db/migrations/**"],
+    ignores: [".next/**", "node_modules/**", "db/migrations/**", "server.js"],
   },
 ];
