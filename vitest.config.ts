@@ -1,11 +1,20 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+import path from "path";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "."),
+    },
+  },
   test: {
     projects: [
       {
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "."),
+          },
+        },
         test: {
           name: "unit",
           include: ["tests/unit/**/*.test.ts"],
@@ -18,6 +27,11 @@ export default defineConfig({
         },
       },
       {
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "."),
+          },
+        },
         test: {
           name: "integration",
           include: ["tests/integration/**/*.test.ts"],
