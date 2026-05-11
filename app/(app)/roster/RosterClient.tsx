@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import InviteForm from "@/components/InviteForm";
 
 interface Member {
@@ -30,20 +31,42 @@ export default function RosterClient({
 }: Props) {
   const [showInvite, setShowInvite] = useState(false);
   const [coGuardianPlayerIds, setCoGuardianPlayerIds] = useState<string[] | null>(null);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const router = useRouter();
 
   const myEntry = parents.find((p) => p.userId === currentUserId);
+
+  async function handleRemoveMember(userId: string, name: string) {
+    if (!confirm(`Remove ${name} from the team? This cannot be undone.`)) return;
+    const res = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: "DELETE" });
+    if (res.ok) {
+      setRemovedIds((s) => new Set(s).add(userId));
+      router.refresh();
+    }
+  }
+
+  const visibleCoaches = coaches.filter((m) => !removedIds.has(m.userId));
+  const visibleParents = parents.filter((m) => !removedIds.has(m.userId));
 
   return (
     <>
       <div className="pb-4">
-        <Section title={`Coaches (${coaches.length})`} members={coaches} />
         <Section
-          title={`Parents & Guardians (${parents.length})`}
-          members={parents}
+          title={`Coaches (${visibleCoaches.length})`}
+          members={visibleCoaches}
+          currentUserId={currentUserId}
+          isCoach={isCoach}
+          onRemove={isCoach ? handleRemoveMember : undefined}
+        />
+        <Section
+          title={`Parents & Guardians (${visibleParents.length})`}
+          members={visibleParents}
           onAddCoGuardian={
             myEntry?.players.length ? (playerIds) => setCoGuardianPlayerIds(playerIds) : undefined
           }
           currentUserId={currentUserId}
+          isCoach={isCoach}
+          onRemove={isCoach ? handleRemoveMember : undefined}
         />
         {isCoach && orphanPlayers.length > 0 && (
           <>
@@ -103,12 +126,16 @@ function Section({
   title,
   members,
   currentUserId,
+  isCoach,
   onAddCoGuardian,
+  onRemove,
 }: {
   title: string;
   members: Member[];
   currentUserId?: string;
+  isCoach?: boolean;
   onAddCoGuardian?: (playerIds: string[]) => void;
+  onRemove?: (userId: string, name: string) => void;
 }) {
   return (
     <>
@@ -120,7 +147,9 @@ function Section({
           key={m.userId}
           member={m}
           isCurrentUser={m.userId === currentUserId}
+          isCoach={isCoach}
           onAddCoGuardian={onAddCoGuardian}
+          onRemove={m.userId !== currentUserId ? onRemove : undefined}
         />
       ))}
     </>
@@ -150,16 +179,30 @@ function CopyButton({ value }: { value: string }) {
 function MemberRow({
   member,
   isCurrentUser,
+  isCoach,
   onAddCoGuardian,
+  onRemove,
 }: {
   member: Member;
   isCurrentUser?: boolean;
+  isCoach?: boolean;
   onAddCoGuardian?: (playerIds: string[]) => void;
+  onRemove?: (userId: string, name: string) => void;
 }) {
   const { user, players } = member;
   return (
     <div className="px-4 py-3 border-b border-gray-100">
-      <div className="font-medium text-gray-900 mb-1">{user.name}</div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="font-medium text-gray-900">{user.name}</div>
+        {isCoach && onRemove && !isCurrentUser && (
+          <button
+            onClick={() => onRemove(member.userId, user.name)}
+            className="text-xs text-red-500 px-2 py-1"
+          >
+            Remove
+          </button>
+        )}
+      </div>
       {user.email && (
         <div className="flex items-center gap-1 mt-0.5">
           <a
