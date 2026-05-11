@@ -6,6 +6,7 @@ import {
   consumeMagicToken,
 } from "@/lib/db/queries/magic-tokens";
 import { findUserByPhone } from "@/lib/db/queries/users";
+import { findValidInvitationByPhone } from "@/lib/db/queries/invitations";
 import { createSession } from "@/lib/db/queries/sessions";
 import type { SmsProvider } from "@/lib/sms/interface";
 import type { Session } from "@/lib/db/schema";
@@ -22,6 +23,15 @@ export async function sendMagicLink(
   const rateCheck = await checkSmsRateLimit(phone);
   if (!rateCheck.allowed) {
     return { ok: false, error: rateCheck.reason, status: 429 };
+  }
+
+  // Enforce invite-only: unregistered phones must have a valid pending invitation
+  const existingUser = await findUserByPhone(phone);
+  if (!existingUser) {
+    const invite = await findValidInvitationByPhone(phone);
+    if (!invite) {
+      return { ok: false, error: "No account found for that number.", status: 403 };
+    }
   }
 
   const { token, hash } = generateToken();
