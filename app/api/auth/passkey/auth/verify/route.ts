@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuthentication } from "@/lib/auth/passkeys";
 import { createSessionForUser } from "@/lib/auth/magic-link";
 import { makeSessionCookieHeader } from "@/lib/auth/session";

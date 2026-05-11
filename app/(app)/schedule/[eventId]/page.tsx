@@ -1,10 +1,15 @@
 import { redirect, notFound } from "next/navigation";
 import { getSessionAndUser } from "@/lib/auth/session";
-import { getTeamsByUser, getTeamMembership, getTeamMembers } from "@/lib/db/queries/teams";
+import { getTeamsByUser, getTeamMembership } from "@/lib/db/queries/teams";
 import { getEventById } from "@/lib/db/queries/events";
 import { getTeamPlayers, getPlayersByGuardian } from "@/lib/db/queries/players";
 import { getEventAvailability } from "@/lib/db/queries/availability";
-import { formatEventTitle, formatEventDate, formatEventTimeRange, isCancelledEvent } from "@/lib/domain/events";
+import {
+  formatEventTitle,
+  formatEventDate,
+  formatEventTimeRange,
+  isCancelledEvent,
+} from "@/lib/domain/events";
 import { availabilitySummary } from "@/lib/domain/availability";
 import EventDetailClient from "./EventDetailClient";
 
@@ -60,7 +65,11 @@ export default async function EventDetailPage({
         isCancelled: isCancelledEvent(event),
       }}
       isCoach={isCoach}
-      players={teamPlayers.map((p) => ({ id: p.id, name: p.name, isMyPlayer: myTeamPlayerIds.has(p.id) }))}
+      players={teamPlayers.map((p) => ({
+        id: p.id,
+        name: p.name,
+        isMyPlayer: myTeamPlayerIds.has(p.id),
+      }))}
       availability={availMap}
       summary={summary}
     />

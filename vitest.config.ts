@@ -24,6 +24,11 @@ export default defineConfig({
           globalSetup: ["tests/integration/global-setup.ts"],
           setupFiles: ["tests/integration/setup.ts"],
           fileParallelism: false,
+          env: {
+            DATABASE_URL:
+              process.env.DATABASE_URL ??
+              "postgres://kanchazo:kanchazo@localhost:5432/kanchazo_test",
+          },
         },
       },
     ],

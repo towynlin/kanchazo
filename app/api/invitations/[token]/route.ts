@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { findInvitationByTokenHash, consumeInvitation } from "@/lib/db/queries/invitations";
-import { getTeamById, addTeamMember, createTeam } from "@/lib/db/queries/teams";
+import { getTeamById, addTeamMember } from "@/lib/db/queries/teams";
 import { findUserByPhone, createUser } from "@/lib/db/queries/users";
 import { addGuardian } from "@/lib/db/queries/players";
 import { createSessionForUser } from "@/lib/auth/magic-link";
@@ -17,10 +17,7 @@ const acceptSchema = z.object({
   phone: z.string().optional(),
 });
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const hash = hashToken(token);
   const invitation = await findInvitationByTokenHash(hash);
@@ -39,10 +36,7 @@ export async function GET(
   });
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const hash = hashToken(token);
   const invitation = await findInvitationByTokenHash(hash);

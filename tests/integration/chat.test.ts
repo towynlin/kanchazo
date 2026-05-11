@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { createUser } from "@/lib/db/queries/users";
-import { createTeam, addTeamMember } from "@/lib/db/queries/teams";
-import { sendMessage, getMessages, updateChatRead, getChatRead, getLatestMessage } from "@/lib/db/queries/chat";
+import { createTeam } from "@/lib/db/queries/teams";
+import {
+  sendMessage,
+  getMessages,
+  updateChatRead,
+  getChatRead,
+  getLatestMessage,
+} from "@/lib/db/queries/chat";
 
 function rando() {
   return `+1415555${Math.floor(Math.random() * 9000 + 1000)}`;

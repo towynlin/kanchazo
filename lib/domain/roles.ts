@@ -2,7 +2,7 @@ export type TeamRole = "parent" | "coach";
 export type SystemRole = "admin";
 export type AnyRole = TeamRole | SystemRole;
 
-export function canViewTeam(role: TeamRole): boolean {
+export function canViewTeam(_role: TeamRole): boolean {
   return true; // both parents and coaches can view
 }
 
@@ -34,11 +34,11 @@ export function canCreateTeam(role: TeamRole): boolean {
   return role === "coach";
 }
 
-export function canEditOwnPlayers(role: TeamRole): boolean {
+export function canEditOwnPlayers(_role: TeamRole): boolean {
   return true; // both parents and coaches
 }
 
-export function canInviteCoGuardian(role: TeamRole): boolean {
+export function canInviteCoGuardian(_role: TeamRole): boolean {
   return true; // both parents and coaches
 }
 

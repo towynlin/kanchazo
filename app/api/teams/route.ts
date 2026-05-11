@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAuth } from "@/lib/api/require-auth";
-import { ok, err, handleZodError } from "@/lib/api/response";
+import { ok, handleZodError } from "@/lib/api/response";
 import { createTeam, getTeamsByUser, addTeamMember } from "@/lib/db/queries/teams";
-import { getTeamMembership } from "@/lib/db/queries/teams";
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),

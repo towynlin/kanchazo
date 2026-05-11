@@ -1,12 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { createUser } from "@/lib/db/queries/users";
 import {
   createMagicToken,
   findUnusedMagicToken,
   consumeMagicToken,
   countRecentMagicTokens,
 } from "@/lib/db/queries/magic-tokens";
-import { hashToken, generateToken } from "@/lib/auth/tokens";
+import { generateToken } from "@/lib/auth/tokens";
 import { MAGIC_LINK_EXPIRY_MINUTES } from "@/lib/domain/invites";
 
 function rando() {
@@ -16,7 +15,7 @@ function rando() {
 describe("magic-token queries", () => {
   it("creates and finds an unused magic token", async () => {
     const phone = rando();
-    const { token, hash } = generateToken();
+    const { hash } = generateToken();
     const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
 
     const created = await createMagicToken({ phone, tokenHash: hash, expiresAt });

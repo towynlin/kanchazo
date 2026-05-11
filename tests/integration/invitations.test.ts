@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { createUser } from "@/lib/db/queries/users";
 import { createTeam } from "@/lib/db/queries/teams";
-import { createInvitation, findInvitationByTokenHash, consumeInvitation } from "@/lib/db/queries/invitations";
+import {
+  createInvitation,
+  findInvitationByTokenHash,
+  consumeInvitation,
+} from "@/lib/db/queries/invitations";
 import { generateToken } from "@/lib/auth/tokens";
 import { INVITE_EXPIRY_DAYS } from "@/lib/domain/invites";
 
@@ -71,9 +75,12 @@ describe("invitations queries", () => {
     const coach = await createUser({ name: "Coach3", phone: rando() });
     const team = await createTeam({ name: "Array Team", createdByUserId: coach.id });
     const { hash } = generateToken();
-    const fakeIds = ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"];
+    const fakeIds = [
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000002",
+    ];
 
-    const invitation = await createInvitation({
+    await createInvitation({
       teamId: team.id,
       inviterUserId: coach.id,
       invitedRole: "parent",

@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { testDb } from "./setup";
-import { users } from "@/lib/db/schema";
-import { findUserByPhone, createUser, updateUser, deleteUser, findUserById } from "@/lib/db/queries/users";
+import {
+  findUserByPhone,
+  createUser,
+  updateUser,
+  deleteUser,
+  findUserById,
+} from "@/lib/db/queries/users";
 
 describe("users queries", () => {
   it("creates a user and finds by phone", async () => {

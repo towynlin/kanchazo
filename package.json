@@ -58,6 +58,8 @@
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "tailwindcss": "^4",

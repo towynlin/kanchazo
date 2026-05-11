@@ -37,7 +37,13 @@ const STATUS_COLORS = {
   maybe: "bg-yellow-100 text-yellow-700",
 } as const;
 
-export default function EventDetailClient({ event, isCoach, players, availability: initAvail, summary }: Props) {
+export default function EventDetailClient({
+  event,
+  isCoach,
+  players,
+  availability: initAvail,
+  summary,
+}: Props) {
   const router = useRouter();
   const [availability, setAvailability] = useState(initAvail);
   const [notes, setNotes] = useState(event.notes ?? "");
@@ -94,7 +100,7 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
   }
 
   const myPlayers = players.filter((p) => p.isMyPlayer);
-  const otherPlayers = players.filter((p) => !p.isMyPlayer);
+  // reserved for future filtering
 
   return (
     <div className="pb-8">
@@ -103,7 +109,9 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className={`text-xl font-bold ${event.isCancelled ? "line-through text-gray-400" : ""}`}>
+              <h1
+                className={`text-xl font-bold ${event.isCancelled ? "line-through text-gray-400" : ""}`}
+              >
                 {event.title}
               </h1>
               {event.isCancelled && (
@@ -112,7 +120,9 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{event.dateLabel} · {event.timeLabel}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {event.dateLabel} · {event.timeLabel}
+            </p>
             <p className="text-sm text-gray-600 mt-0.5">📍 {event.location}</p>
           </div>
         </div>
@@ -271,7 +281,10 @@ export default function EventDetailClient({ event, isCoach, players, availabilit
             isHome: event.isHome,
             notes: event.notes,
           }}
-          onSaved={() => { setShowEdit(false); router.refresh(); }}
+          onSaved={() => {
+            setShowEdit(false);
+            router.refresh();
+          }}
           onClose={() => setShowEdit(false)}
         />
       )}
