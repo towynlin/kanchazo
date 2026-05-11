@@ -41,7 +41,7 @@ JS `&&` between two Drizzle SQL fragments evaluates to the **second operand** (a
 
 ## Phone validation happens before business logic
 
-`libphonenumber-js` rejects structurally invalid numbers with **400** before any invite-gate or auth logic runs. Tests that expect a 403 invite-gate response must use a *valid* E.164 number (e.g. `+14155550199`), not a placeholder like `+15550000000`.
+`libphonenumber-js` rejects structurally invalid numbers with **400** before any invite-gate or auth logic runs. Tests that expect a 403 invite-gate response must use a _valid_ E.164 number (e.g. `+14155550199`), not a placeholder like `+15550000000`.
 
 ---
 
