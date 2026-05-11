@@ -8,7 +8,7 @@ import { createPlayer } from "@/lib/db/queries/players";
 import { generateToken } from "@/lib/auth/tokens";
 import { getSmsProvider } from "@/lib/sms";
 import { getEmailProvider } from "@/lib/email";
-import { canInviteParent, canInviteCoach } from "@/lib/domain/roles";
+import { canInviteParent, canInviteCoach, canInviteCoGuardian } from "@/lib/domain/roles";
 import { normalizePhone } from "@/lib/domain/phone";
 import { INVITE_EXPIRY_DAYS } from "@/lib/domain/invites";
 
@@ -17,7 +17,8 @@ const schema = z.object({
   invitedRole: z.enum(["parent", "coach"]),
   contactPhone: z.string().optional().nullable(),
   contactEmail: z.string().email().optional().nullable(),
-  playerNames: z.array(z.string().min(1)).optional(), // for parent invites
+  playerNames: z.array(z.string().min(1)).optional(), // coach inviting parent: pre-create players
+  intendedPlayerIds: z.array(z.string().uuid()).optional(), // parent sharing co-guardian access
 });
 
 export async function POST(req: NextRequest) {
@@ -36,16 +37,21 @@ export async function POST(req: NextRequest) {
       if (data.invitedRole === "coach" && !canInviteCoach(membership.role)) {
         return err("Only coaches can invite coaches", 403);
       }
-      if (data.invitedRole === "parent" && !canInviteParent(membership.role)) {
-        return err("Only coaches can invite parents", 403);
+      if (data.invitedRole === "parent") {
+        const isCoGuardianInvite = !!(data.intendedPlayerIds?.length && !data.playerNames?.length);
+        if (isCoGuardianInvite && !canInviteCoGuardian(membership.role)) {
+          return err("Not allowed", 403);
+        } else if (!isCoGuardianInvite && !canInviteParent(membership.role)) {
+          return err("Only coaches can invite new parents", 403);
+        }
       }
     }
 
     const phone = data.contactPhone ? normalizePhone(data.contactPhone) : null;
     if (data.contactPhone && !phone) return err("Invalid phone number", 400);
 
-    // Pre-create players for parent invites
-    let intendedPlayerIds: string[] = [];
+    // Pre-create players for coach→parent invites (playerNames provided)
+    let intendedPlayerIds: string[] = data.intendedPlayerIds ?? [];
     if (data.invitedRole === "parent" && data.teamId && data.playerNames?.length) {
       const created = await Promise.all(
         data.playerNames.map((name) => createPlayer({ teamId: data.teamId!, name })),
