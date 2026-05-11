@@ -3,6 +3,7 @@ import { getSessionAndUser } from "@/lib/auth/session";
 import { getTeamsByUser, getTeamMembers, getTeamMembership } from "@/lib/db/queries/teams";
 import { getPlayersByGuardian } from "@/lib/db/queries/players";
 import RosterClient from "./RosterClient";
+import { selectTeam } from "@/lib/api/selected-team";
 
 export default async function RosterPage() {
   const auth = await getSessionAndUser();
@@ -17,7 +18,7 @@ export default async function RosterPage() {
     );
   }
 
-  const team = teams[0];
+  const team = (await selectTeam(teams))!;
   const [members, myMembership] = await Promise.all([
     getTeamMembers(team.id),
     getTeamMembership(team.id, auth.user.id),

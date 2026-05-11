@@ -2,7 +2,7 @@
 
 import { useState, createContext, useContext } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Team, User } from "@/lib/db/schema";
 
 interface TeamContextValue {
@@ -24,12 +24,14 @@ export function useTeam() {
 interface Props {
   user: User;
   teams: Team[];
+  initialTeamId?: string;
   children: React.ReactNode;
 }
 
-export default function AppShell({ user, teams, children }: Props) {
+export default function AppShell({ user, teams, initialTeamId, children }: Props) {
+  const router = useRouter();
   const [currentTeamId, setCurrentTeamId] = useState<string>(
-    teams[0]?.id ?? "",
+    initialTeamId ?? teams[0]?.id ?? "",
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const pathname = usePathname();
@@ -39,10 +41,8 @@ export default function AppShell({ user, teams, children }: Props) {
   function handleTeamSwitch(id: string) {
     setCurrentTeamId(id);
     setSheetOpen(false);
-    // Persist to localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kanchazo_team", id);
-    }
+    document.cookie = `kanchazo_team=${id}; path=/; max-age=31536000; SameSite=Lax`;
+    router.refresh();
   }
 
   const tabs = [

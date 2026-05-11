@@ -7,6 +7,7 @@ import { getEventAvailability } from "@/lib/db/queries/availability";
 import { formatEventDate, formatEventTitle, formatEventTimeRange } from "@/lib/domain/events";
 import ScheduleClient from "./ScheduleClient";
 import NoTeamState from "@/components/NoTeamState";
+import { selectTeam } from "@/lib/api/selected-team";
 
 export default async function SchedulePage() {
   const auth = await getSessionAndUser();
@@ -17,8 +18,7 @@ export default async function SchedulePage() {
     return <NoTeamState canCreateTeam />;
   }
 
-  // Default to first team; client-side switching will update the view
-  const team = teams[0];
+  const team = (await selectTeam(teams))!;
   const membership = await getTeamMembership(team.id, auth.user.id);
   const events = await getTeamEvents(team.id);
   const myPlayers = await getPlayersByGuardian(auth.user.id);
