@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, notExists, and } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   players,
@@ -53,6 +53,23 @@ export async function getPlayerGuardians(playerId: string): Promise<User[]> {
     .innerJoin(users, eq(users.id, playerGuardians.userId))
     .where(eq(playerGuardians.playerId, playerId));
   return rows.map((r) => r.user);
+}
+
+export async function getOrphanPlayers(teamId: string): Promise<Player[]> {
+  return db
+    .select()
+    .from(players)
+    .where(
+      and(
+        eq(players.teamId, teamId),
+        notExists(
+          db
+            .select({ id: playerGuardians.playerId })
+            .from(playerGuardians)
+            .where(eq(playerGuardians.playerId, players.id)),
+        ),
+      ),
+    );
 }
 
 export async function getPlayersByGuardian(userId: string): Promise<Player[]> {

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionAndUser } from "@/lib/auth/session";
 import { getTeamsByUser, getTeamMembers, getTeamMembership } from "@/lib/db/queries/teams";
-import { getPlayersByGuardian } from "@/lib/db/queries/players";
+import { getPlayersByGuardian, getOrphanPlayers } from "@/lib/db/queries/players";
 import RosterClient from "./RosterClient";
 import { selectTeam } from "@/lib/api/selected-team";
 
@@ -25,12 +25,15 @@ export default async function RosterPage() {
   ]);
   const isCoach = myMembership?.role === "coach";
 
-  const membersWithPlayers = await Promise.all(
-    members.map(async (m) => {
-      const allPlayers = await getPlayersByGuardian(m.userId);
-      return { ...m, players: allPlayers.filter((p) => p.teamId === team.id) };
-    }),
-  );
+  const [membersWithPlayers, orphanPlayers] = await Promise.all([
+    Promise.all(
+      members.map(async (m) => {
+        const allPlayers = await getPlayersByGuardian(m.userId);
+        return { ...m, players: allPlayers.filter((p) => p.teamId === team.id) };
+      }),
+    ),
+    isCoach ? getOrphanPlayers(team.id) : Promise.resolve([]),
+  ]);
 
   function sortByName<T extends { user: { name: string } }>(arr: T[]): T[] {
     return [...arr].sort((a, b) => a.user.name.localeCompare(b.user.name));
@@ -39,5 +42,13 @@ export default async function RosterPage() {
   const coaches = sortByName(membersWithPlayers.filter((m) => m.role === "coach"));
   const parents = sortByName(membersWithPlayers.filter((m) => m.role === "parent"));
 
-  return <RosterClient teamId={team.id} isCoach={isCoach} coaches={coaches} parents={parents} />;
+  return (
+    <RosterClient
+      teamId={team.id}
+      isCoach={isCoach}
+      coaches={coaches}
+      parents={parents}
+      orphanPlayers={orphanPlayers}
+    />
+  );
 }

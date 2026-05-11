@@ -16,9 +16,10 @@ interface Props {
   isCoach: boolean;
   coaches: Member[];
   parents: Member[];
+  orphanPlayers: { id: string; name: string }[];
 }
 
-export default function RosterClient({ teamId, isCoach, coaches, parents }: Props) {
+export default function RosterClient({ teamId, isCoach, coaches, parents, orphanPlayers }: Props) {
   const [showInvite, setShowInvite] = useState(false);
 
   return (
@@ -26,6 +27,28 @@ export default function RosterClient({ teamId, isCoach, coaches, parents }: Prop
       <div className="pb-4">
         <Section title={`Coaches (${coaches.length})`} members={coaches} />
         <Section title={`Parents & Guardians (${parents.length})`} members={parents} />
+        {isCoach && orphanPlayers.length > 0 && (
+          <>
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 mt-2">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Pending guardians ({orphanPlayers.length})
+              </h2>
+            </div>
+            {orphanPlayers.map((p) => (
+              <div
+                key={p.id}
+                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between"
+              >
+                <div>
+                  <span className="font-medium text-gray-900">{p.name}</span>
+                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">
+                    Awaiting guardian
+                  </span>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {isCoach && (
