@@ -20,6 +20,8 @@ export default function SettingsClient({ user, passkeys }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [addingPasskey, setAddingPasskey] = useState(false);
+  const [icalUrl, setIcalUrl] = useState<string | null>(null);
+  const [loadingIcal, setLoadingIcal] = useState(false);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +46,19 @@ export default function SettingsClient({ user, passkeys }: Props) {
       body: JSON.stringify({ everywhere }),
     });
     router.push("/auth");
+  }
+
+  async function handleGetIcalUrl() {
+    setLoadingIcal(true);
+    try {
+      const res = await fetch("/api/ical");
+      if (res.ok) {
+        const d = await res.json();
+        setIcalUrl(d.url);
+      }
+    } finally {
+      setLoadingIcal(false);
+    }
   }
 
   async function handleAddPasskey() {
@@ -145,6 +160,40 @@ export default function SettingsClient({ user, passkeys }: Props) {
         >
           {addingPasskey ? "Setting up…" : "+ Add passkey for this device"}
         </button>
+      </section>
+
+      {/* Calendar */}
+      <section className="px-4 py-4 border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          Calendar feed
+        </h2>
+        <p className="text-xs text-gray-500 mb-3">
+          Subscribe to your team events in Apple Calendar, Google Calendar, or any iCal app.
+        </p>
+        {icalUrl ? (
+          <div className="space-y-2">
+            <input
+              readOnly
+              value={icalUrl}
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs text-gray-700 bg-gray-50 select-all"
+            />
+            <a
+              href={`webcal://${icalUrl.replace(/^https?:\/\//, "")}`}
+              className="block text-center py-2.5 border border-blue-600 text-blue-600 rounded-xl text-sm font-medium"
+            >
+              Subscribe in Calendar app
+            </a>
+          </div>
+        ) : (
+          <button
+            onClick={handleGetIcalUrl}
+            disabled={loadingIcal}
+            className="px-4 py-2.5 border border-blue-600 text-blue-600 rounded-xl text-sm font-medium disabled:opacity-50"
+          >
+            {loadingIcal ? "Loading…" : "Get calendar link"}
+          </button>
+        )}
       </section>
 
       {/* Sign out */}

@@ -2,16 +2,30 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
-const globalForDb = globalThis as unknown as { _pgPool: Pool | undefined };
+type DbType = ReturnType<typeof drizzle<typeof schema>>;
+const g = globalThis as unknown as { _pgPool?: Pool; _db?: DbType };
 
-function createPool(): Pool {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
-  return new Pool({ connectionString: url });
+function getPool(): Pool {
+  if (!g._pgPool) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is not set");
+    g._pgPool = new Pool({ connectionString: url });
+  }
+  return g._pgPool;
 }
 
-// Reuse the pool in dev to avoid exhausting connections across HMR reloads
-export const pool = globalForDb._pgPool ?? createPool();
-if (process.env.NODE_ENV !== "production") globalForDb._pgPool = pool;
+function getDb(): DbType {
+  if (!g._db) {
+    g._db = drizzle(getPool(), { schema });
+  }
+  return g._db;
+}
 
-export const db = drizzle(pool, { schema });
+// Proxy so callers can still use `db.select()...` directly
+export const pool = new Proxy({} as Pool, {
+  get: (_, prop) => (getPool() as unknown as Record<string | symbol, unknown>)[prop],
+});
+
+export const db = new Proxy({} as DbType, {
+  get: (_, prop) => (getDb() as unknown as Record<string | symbol, unknown>)[prop],
+});

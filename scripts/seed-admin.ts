@@ -56,7 +56,7 @@ async function main() {
   const url = `${appUrl}/invite/${token}`;
 
   const sms = new LoggerSmsProvider();
-  await sms.sendInvite(phone, "System Admin", url);
+  await sms.sendInvite(phone!, "System Admin", url);
 
   console.log(`\n✅ Invitation created for ${phone}`);
   console.log(`   ID:      ${invitation.id}`);

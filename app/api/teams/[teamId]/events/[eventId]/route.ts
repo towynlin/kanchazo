@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireTeamMember, requireCoach } from "@/lib/api/require-auth";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { getEventById, updateEvent, deleteEvent } from "@/lib/db/queries/events";
+import { writeAuditLog } from "@/lib/db/queries/audit-log";
 
 const updateSchema = z.object({
   kind: z.enum(["game", "practice"]).optional(),
@@ -51,6 +52,14 @@ export async function PATCH(
       endsAt: data.endsAt !== undefined ? (data.endsAt ? new Date(data.endsAt) : null) : undefined,
       updatedByUserId: auth.user.id,
     });
+    const action = data.status === "cancelled" ? "event.cancel" : "event.update";
+    await writeAuditLog({
+      actorUserId: auth.user.id,
+      teamId,
+      action,
+      target: `event:${eventId}`,
+      payload: data,
+    });
     return ok(updated);
   } catch (e) {
     return handleZodError(e);
@@ -69,5 +78,11 @@ export async function DELETE(
   if (!event || event.teamId !== teamId) return err("Not found", 404);
 
   await deleteEvent(eventId);
+  await writeAuditLog({
+    actorUserId: auth.user.id,
+    teamId,
+    action: "event.delete",
+    target: `event:${eventId}`,
+  });
   return ok({ deleted: true });
 }

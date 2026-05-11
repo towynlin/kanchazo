@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireTeamMember, requireCoach } from "@/lib/api/require-auth";
 import { ok, handleZodError } from "@/lib/api/response";
 import { createEvent, getTeamEvents } from "@/lib/db/queries/events";
+import { writeAuditLog } from "@/lib/db/queries/audit-log";
 
 const createSchema = z.object({
   kind: z.enum(["game", "practice"]),
@@ -48,6 +49,13 @@ export async function POST(
       isHome: data.isHome ?? null,
       notes: data.notes ?? null,
       createdByUserId: auth.user.id,
+    });
+    await writeAuditLog({
+      actorUserId: auth.user.id,
+      teamId,
+      action: "event.create",
+      target: `event:${event.id}`,
+      payload: { kind: event.kind, startsAt: event.startsAt },
     });
     return ok(event, 201);
   } catch (e) {
