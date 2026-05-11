@@ -38,14 +38,17 @@ const STATUS_COLORS: Record<string, string> = {
 export default function ScheduleClient({
   teamId,
   isCoach,
-  events,
+  events: initialEvents,
   myPlayers,
   initialAvailability,
 }: Props) {
   const router = useRouter();
+  const [events, setEvents] = useState(initialEvents);
   const [availability, setAvailability] = useState(initialAvailability);
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
+  const [loadingPast, setLoadingPast] = useState(false);
+  const [pastLoaded, setPastLoaded] = useState(false);
 
   const setAvail = useCallback(
     async (eventId: string, playerId: string, status: "yes" | "no" | "maybe") => {
@@ -87,6 +90,22 @@ export default function ScheduleClient({
     [availability, teamId],
   );
 
+  async function loadPastEvents() {
+    if (pastLoaded || loadingPast) return;
+    setLoadingPast(true);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/events/serialized?past=true`);
+      if (!res.ok) return;
+      const all: SerializedEvent[] = await res.json();
+      const currentIds = new Set(events.map((e) => e.id));
+      const past = all.filter((e) => !currentIds.has(e.id));
+      setEvents((prev) => [...past, ...prev]);
+      setPastLoaded(true);
+    } finally {
+      setLoadingPast(false);
+    }
+  }
+
   // Group events by date
   const byDate: Record<string, SerializedEvent[]> = {};
   for (const event of events) {
@@ -119,6 +138,17 @@ export default function ScheduleClient({
   return (
     <>
       <div className="pb-4">
+        {!pastLoaded && (
+          <div className="px-4 py-2 text-center border-b border-gray-100">
+            <button
+              onClick={loadPastEvents}
+              disabled={loadingPast}
+              className="text-sm text-blue-600 font-medium disabled:opacity-50"
+            >
+              {loadingPast ? "Loading…" : "↑ Show past events"}
+            </button>
+          </div>
+        )}
         {Object.entries(byDate).map(([date, dayEvents]) => (
           <div key={date}>
             {/* Sticky date header */}

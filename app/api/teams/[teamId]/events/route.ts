@@ -16,15 +16,16 @@ const createSchema = z.object({
 });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   const { teamId } = await params;
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;
 
-  const events = await getTeamEvents(teamId);
-  return ok(events);
+  const includePast = req.nextUrl.searchParams.get("past") === "true";
+  const evts = await getTeamEvents(teamId, { includePast });
+  return ok(evts);
 }
 
 export async function POST(
