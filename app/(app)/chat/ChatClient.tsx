@@ -65,6 +65,38 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
     }
   }, [messages, teamId]);
 
+  // Ref to track the latest message ID for missed-message reconciliation
+  const latestMessageIdRef = useRef<string | null>(
+    initialMessages.at(-1)?.id ?? null,
+  );
+  useEffect(() => {
+    const last = messages.filter((m) => !m.id.startsWith("opt-")).at(-1);
+    if (last) latestMessageIdRef.current = last.id;
+  }, [messages]);
+
+  // Poll for missed messages since last known ID (called on reconnect)
+  async function fetchMissedMessages() {
+    const since = latestMessageIdRef.current;
+    if (!since) return;
+    try {
+      const res = await fetch(
+        `/api/teams/${teamId}/messages?since=${encodeURIComponent(since)}`,
+      );
+      if (!res.ok) return;
+      const missed: Array<Message & { senderUserId: string }> = await res.json();
+      if (missed.length === 0) return;
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newMsgs = missed
+          .filter((m) => !existingIds.has(m.id))
+          .map((m) => ({ ...m, isMe: m.senderUserId === userId }));
+        return [...prev, ...newMsgs];
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   // WebSocket connection with exponential backoff reconnect
   useEffect(() => {
     let attempts = 0;
@@ -87,6 +119,10 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
       };
 
       ws.onopen = () => {
+        if (attempts > 0) {
+          // Reconnected — fetch any messages we missed while disconnected
+          fetchMissedMessages();
+        }
         attempts = 0;
       };
 
@@ -102,7 +138,7 @@ export default function ChatClient({ teamId, userId, userName, initialMessages, 
       wsRef.current?.close();
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
     };
-  }, [teamId, userId]);
+  }, [teamId, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();

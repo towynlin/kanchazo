@@ -2,6 +2,11 @@ import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { chatMessages, chatReads, users, type ChatMessage } from "@/lib/db/schema";
 
+export async function getMessageById(id: string): Promise<ChatMessage | null> {
+  const results = await db.select().from(chatMessages).where(eq(chatMessages.id, id)).limit(1);
+  return results[0] ?? null;
+}
+
 export interface ChatMessageWithSender extends ChatMessage {
   senderName: string | null;
 }
@@ -17,11 +22,14 @@ export async function sendMessage(data: {
 
 export async function getMessages(
   teamId: string,
-  opts: { limit?: number; before?: Date } = {},
+  opts: { limit?: number; before?: Date; after?: Date } = {},
 ): Promise<ChatMessageWithSender[]> {
   const conditions = [eq(chatMessages.teamId, teamId)];
   if (opts.before) {
     conditions.push(gt(chatMessages.sentAt, opts.before));
+  }
+  if (opts.after) {
+    conditions.push(gt(chatMessages.sentAt, opts.after));
   }
   const rows = await db
     .select({ message: chatMessages, sender: users })

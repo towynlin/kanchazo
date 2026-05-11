@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireTeamMember } from "@/lib/api/require-auth";
 import { ok, handleZodError } from "@/lib/api/response";
-import { sendMessage, getMessages } from "@/lib/db/queries/chat";
+import { sendMessage, getMessages, getMessageById } from "@/lib/db/queries/chat";
 import { db } from "@/lib/db/client";
 import { sql } from "drizzle-orm";
 
@@ -16,10 +16,16 @@ export async function GET(
   const auth = await requireTeamMember(teamId);
   if (!auth.ok) return auth.response;
 
-  const before = req.nextUrl.searchParams.get("before");
+  const sinceId = req.nextUrl.searchParams.get("since");
+  let afterDate: Date | undefined;
+  if (sinceId) {
+    const sinceMsg = await getMessageById(sinceId);
+    if (sinceMsg) afterDate = sinceMsg.sentAt;
+  }
+
   const messages = await getMessages(teamId, {
-    limit: 50,
-    before: before ? new Date(before) : undefined,
+    limit: 100,
+    after: afterDate,
   });
   return ok(messages);
 }
