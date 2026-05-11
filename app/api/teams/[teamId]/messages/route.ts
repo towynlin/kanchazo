@@ -58,16 +58,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tea
     const members = await getTeamMembers(teamId);
     const otherUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
     if (otherUserIds.length > 0) {
-      getNonMutedSubscriptions(otherUserIds, teamId).then((subs) => {
-        if (subs.length > 0) {
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-          sendPushToUsers(subs, {
-            title: auth.user.name,
-            body: text.slice(0, 100),
-            url: `${appUrl}/chat`,
-          }).catch(() => {});
-        }
-      }).catch(() => {});
+      getNonMutedSubscriptions(otherUserIds, teamId)
+        .then((subs) => {
+          if (subs.length > 0) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+            sendPushToUsers(subs, {
+              title: auth.user.name,
+              body: text.slice(0, 100),
+              url: `${appUrl}/chat`,
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
     }
 
     return ok(message, 201);

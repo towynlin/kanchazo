@@ -1,6 +1,6 @@
 # Kanchazo
 
-Kanchazo is a Spanish-rooted word — *cancha* is what Latino families call the field, where their kids play every weekend. Add *-azo* and it becomes a big, joyful play — like *golazo*. That's what this app is about: making the weekend game day feel like a win for parents too.
+Kanchazo is a Spanish-rooted word — _cancha_ is what Latino families call the field, where their kids play every weekend. Add _-azo_ and it becomes a big, joyful play — like _golazo_. That's what this app is about: making the weekend game day feel like a win for parents too.
 
 A mobile-first, invite-only PWA for managing youth sports teams. Coaches create the team, invite parents, and everyone sees the same schedule, sets availability, and chats in one place. No accounts to create, no payments, no noise.
 
@@ -51,15 +51,15 @@ The invite link is printed to the console. Open it to complete signup, create yo
 
 ### Other make targets
 
-| Command | What it does |
-|---|---|
-| `make dev` | Start Postgres + dev server |
-| `make migrate` | Run pending DB migrations |
-| `make test` | Unit + integration tests |
-| `make test-unit` | Unit tests only (no DB needed) |
-| `make lint` | ESLint + TypeScript + Prettier |
-| `make build` | Production build |
-| `make clean` | Remove containers, volumes, and build artifacts |
+| Command          | What it does                                    |
+| ---------------- | ----------------------------------------------- |
+| `make dev`       | Start Postgres + dev server                     |
+| `make migrate`   | Run pending DB migrations                       |
+| `make test`      | Unit + integration tests                        |
+| `make test-unit` | Unit tests only (no DB needed)                  |
+| `make lint`      | ESLint + TypeScript + Prettier                  |
+| `make build`     | Production build                                |
+| `make clean`     | Remove containers, volumes, and build artifacts |
 
 ### Running with Docker Compose
 
@@ -79,23 +79,23 @@ The app will be available at [http://localhost:3000](http://localhost:3000). The
 
 Set these in your hosting environment. Never commit `.env`.
 
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | ✅ | Postgres connection string |
-| `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of the app, e.g. `https://kanchazo.fly.dev` |
-| `SESSION_SECRET` | ✅ | Random 64-char hex string for signing session cookies |
-| `WEBAUTHN_RP_ID` | ✅ | Domain only, e.g. `kanchazo.fly.dev` |
-| `WEBAUTHN_ORIGIN` | ✅ | Full origin, e.g. `https://kanchazo.fly.dev` |
-| `WEBAUTHN_RP_NAME` | ✅ | Display name shown in passkey prompts |
-| `SMS_PROVIDER` | ✅ | `twilio` in production, `logger` in dev |
-| `TWILIO_ACCOUNT_SID` | if Twilio | From the Twilio console |
-| `TWILIO_AUTH_TOKEN` | if Twilio | From the Twilio console |
-| `TWILIO_FROM_NUMBER` | if Twilio | E.164 number, e.g. `+15005550006` |
-| `EMAIL_PROVIDER` | ✅ | `resend` in production, `logger` in dev |
-| `RESEND_API_KEY` | if Resend | From the Resend dashboard |
-| `VAPID_PUBLIC_KEY` | optional | Web Push public key (for push notifications) |
-| `VAPID_PRIVATE_KEY` | optional | Web Push private key |
-| `VAPID_SUBJECT` | optional | `mailto:` URI for VAPID, defaults to `mailto:admin@kanchazo.app` |
+| Variable              | Required  | Description                                                      |
+| --------------------- | --------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`        | ✅        | Postgres connection string                                       |
+| `NEXT_PUBLIC_APP_URL` | ✅        | Public URL of the app, e.g. `https://kanchazo.fly.dev`           |
+| `SESSION_SECRET`      | ✅        | Random 64-char hex string for signing session cookies            |
+| `WEBAUTHN_RP_ID`      | ✅        | Domain only, e.g. `kanchazo.fly.dev`                             |
+| `WEBAUTHN_ORIGIN`     | ✅        | Full origin, e.g. `https://kanchazo.fly.dev`                     |
+| `WEBAUTHN_RP_NAME`    | ✅        | Display name shown in passkey prompts                            |
+| `SMS_PROVIDER`        | ✅        | `twilio` in production, `logger` in dev                          |
+| `TWILIO_ACCOUNT_SID`  | if Twilio | From the Twilio console                                          |
+| `TWILIO_AUTH_TOKEN`   | if Twilio | From the Twilio console                                          |
+| `TWILIO_FROM_NUMBER`  | if Twilio | E.164 number, e.g. `+15005550006`                                |
+| `EMAIL_PROVIDER`      | ✅        | `resend` in production, `logger` in dev                          |
+| `RESEND_API_KEY`      | if Resend | From the Resend dashboard                                        |
+| `VAPID_PUBLIC_KEY`    | optional  | Web Push public key (for push notifications)                     |
+| `VAPID_PRIVATE_KEY`   | optional  | Web Push private key                                             |
+| `VAPID_SUBJECT`       | optional  | `mailto:` URI for VAPID, defaults to `mailto:admin@kanchazo.app` |
 
 Generate VAPID keys with:
 

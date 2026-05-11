@@ -68,17 +68,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<Para
       const members = await getTeamMembers(teamId);
       const otherUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
       if (otherUserIds.length > 0) {
-        getNonMutedSubscriptions(otherUserIds, teamId).then((subs) => {
-          if (subs.length > 0) {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-            const label = event.kind === "game" ? "Game" : "Practice";
-            sendPushToUsers(subs, {
-              title: `${label} cancelled`,
-              body: `${event.location} · ${new Date(event.startsAt).toLocaleDateString()}`,
-              url: `${appUrl}/schedule`,
-            }).catch(() => {});
-          }
-        }).catch(() => {});
+        getNonMutedSubscriptions(otherUserIds, teamId)
+          .then((subs) => {
+            if (subs.length > 0) {
+              const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+              const label = event.kind === "game" ? "Game" : "Practice";
+              sendPushToUsers(subs, {
+                title: `${label} cancelled`,
+                body: `${event.location} · ${new Date(event.startsAt).toLocaleDateString()}`,
+                url: `${appUrl}/schedule`,
+              }).catch(() => {});
+            }
+          })
+          .catch(() => {});
       }
     }
 
