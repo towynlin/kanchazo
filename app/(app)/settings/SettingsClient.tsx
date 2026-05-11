@@ -150,6 +150,17 @@ export default function SettingsClient({ user, passkeys }: Props) {
                   {pk.lastUsedAt && ` · Used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
                 </div>
               </div>
+              <button
+                onClick={async () => {
+                  if (!confirm("Remove this passkey?")) return;
+                  await fetch(`/api/auth/passkey/${pk.id}`, { method: "DELETE" });
+                  router.refresh();
+                }}
+                className="text-red-500 text-sm px-2 py-1 min-h-0"
+                style={{ minHeight: "auto" }}
+              >
+                Remove
+              </button>
             </div>
           ))}
         </div>
