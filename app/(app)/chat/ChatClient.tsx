@@ -15,6 +15,7 @@ interface Props {
   userId: string;
   userName: string;
   initialMessages: Message[];
+  lastReadMessageId?: string | null;
 }
 
 function linkify(text: string): string {
@@ -34,13 +35,15 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-export default function ChatClient({ teamId, userId, userName, initialMessages }: Props) {
+export default function ChatClient({ teamId, userId, userName, initialMessages, lastReadMessageId }: Props) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track the ID boundary where new (unread) messages begin
+  const newMessageDividerAfter = lastReadMessageId ?? initialMessages.at(-1)?.id ?? null;
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -147,9 +150,22 @@ export default function ChatClient({ teamId, userId, userName, initialMessages }
             No messages yet. Say hi! 👋
           </div>
         )}
-        {messages.map((msg) => (
+        {messages.map((msg, i) => {
+          const isFirstUnread =
+            newMessageDividerAfter &&
+            i > 0 &&
+            messages[i - 1].id === newMessageDividerAfter &&
+            msg.id !== newMessageDividerAfter &&
+            !msg.id.startsWith("opt-");
+          return <div key={msg.id}>
+          {isFirstUnread && (
+            <div className="flex items-center gap-2 my-3 px-2">
+              <div className="flex-1 h-px bg-blue-200" />
+              <span className="text-xs text-blue-500 font-medium shrink-0">New messages</span>
+              <div className="flex-1 h-px bg-blue-200" />
+            </div>
+          )}
           <div
-            key={msg.id}
             className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}
           >
             <div className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}>
@@ -167,7 +183,8 @@ export default function ChatClient({ teamId, userId, userName, initialMessages }
               <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.sentAt)}</span>
             </div>
           </div>
-        ))}
+          </div>;
+        })}
         <div ref={bottomRef} />
       </div>
 

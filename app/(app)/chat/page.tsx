@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionAndUser } from "@/lib/auth/session";
 import { getTeamsByUser } from "@/lib/db/queries/teams";
-import { getMessages } from "@/lib/db/queries/chat";
+import { getMessages, getChatRead } from "@/lib/db/queries/chat";
 import ChatClient from "./ChatClient";
 import { selectTeam } from "@/lib/api/selected-team";
 
@@ -19,7 +19,10 @@ export default async function ChatPage() {
   }
 
   const team = (await selectTeam(teams))!;
-  const messages = await getMessages(team.id, { limit: 50 });
+  const [messages, readState] = await Promise.all([
+    getMessages(team.id, { limit: 50 }),
+    getChatRead(auth.user.id, team.id),
+  ]);
 
   const serialized = messages.map((m) => ({
     id: m.id,
@@ -35,6 +38,7 @@ export default async function ChatPage() {
       userId={auth.user.id}
       userName={auth.user.name}
       initialMessages={serialized}
+      lastReadMessageId={readState?.lastReadMessageId ?? null}
     />
   );
 }
