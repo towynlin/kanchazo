@@ -1,4 +1,4 @@
-.PHONY: dev migrate test test-unit test-integration test-e2e lint build clean
+.PHONY: dev migrate test test-unit test-integration test-e2e lint build clean seed-admin
 
 dev:
 	@cp -n .env.example .env 2>/dev/null || true
@@ -32,6 +32,10 @@ lint:
 
 build:
 	npm run build
+
+seed-admin:
+	@if [ -z "$(PHONE)" ]; then echo "Usage: make seed-admin PHONE=+15555550100"; exit 1; fi
+	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo tsx scripts/seed-admin.ts $(PHONE)
 
 clean:
 	docker compose down -v

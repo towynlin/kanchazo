@@ -246,6 +246,19 @@ export const auditLog = pgTable("audit_log", {
 });
 
 // ──────────────────────────────────────────────
+// iCal read-only tokens
+// ──────────────────────────────────────────────
+
+export const icalTokens = pgTable("ical_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ──────────────────────────────────────────────
 // Inferred types
 // ──────────────────────────────────────────────
 

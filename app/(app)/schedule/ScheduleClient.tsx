@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import CreateEventModal from "@/components/CreateEventModal";
 
 interface SerializedEvent {
   id: string;
@@ -40,8 +42,10 @@ export default function ScheduleClient({
   myPlayers,
   initialAvailability,
 }: Props) {
+  const router = useRouter();
   const [availability, setAvailability] = useState(initialAvailability);
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
 
   const setAvail = useCallback(
     async (eventId: string, playerId: string, status: "yes" | "no" | "maybe") => {
@@ -92,42 +96,74 @@ export default function ScheduleClient({
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="text-5xl mb-4">📅</div>
-        <h2 className="text-xl font-semibold mb-2">No upcoming events</h2>
-        {isCoach && (
-          <p className="text-gray-500 text-sm">Tap + to add a practice or game.</p>
+      <>
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+          <div className="text-5xl mb-4">📅</div>
+          <h2 className="text-xl font-semibold mb-2">No upcoming events</h2>
+          {isCoach && (
+            <p className="text-gray-500 text-sm">Tap + to add a practice or game.</p>
+          )}
+        </div>
+        {isCoach && <CoachFab onClick={() => setShowCreate(true)} />}
+        {showCreate && (
+          <CreateEventModal
+            teamId={teamId}
+            onCreated={() => { setShowCreate(false); router.refresh(); }}
+            onClose={() => setShowCreate(false)}
+          />
         )}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="pb-4">
-      {Object.entries(byDate).map(([date, dayEvents]) => (
-        <div key={date}>
-          {/* Sticky date header */}
-          <div className="sticky top-0 bg-gray-50 px-4 py-2 border-b border-gray-200 z-10">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              {date}
-            </span>
-          </div>
+    <>
+      <div className="pb-4">
+        {Object.entries(byDate).map(([date, dayEvents]) => (
+          <div key={date}>
+            {/* Sticky date header */}
+            <div className="sticky top-0 bg-gray-50 px-4 py-2 border-b border-gray-200 z-10">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {date}
+              </span>
+            </div>
 
-          {dayEvents.map((event) => (
-            <EventRow
-              key={event.id}
-              event={event}
-              myPlayers={myPlayers}
-              availability={availability[event.id] ?? {}}
-              onSetAvail={(playerId, status) => setAvail(event.id, playerId, status)}
-              pending={myPlayers.some((p) =>
-                optimisticPending.has(`${event.id}:${p.id}`),
-              )}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
+            {dayEvents.map((event) => (
+              <EventRow
+                key={event.id}
+                event={event}
+                myPlayers={myPlayers}
+                availability={availability[event.id] ?? {}}
+                onSetAvail={(playerId, status) => setAvail(event.id, playerId, status)}
+                pending={myPlayers.some((p) =>
+                  optimisticPending.has(`${event.id}:${p.id}`),
+                )}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      {isCoach && <CoachFab onClick={() => setShowCreate(true)} />}
+      {showCreate && (
+        <CreateEventModal
+          teamId={teamId}
+          onCreated={() => { setShowCreate(false); router.refresh(); }}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function CoachFab({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Create event"
+      className="fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg text-2xl flex items-center justify-center z-10"
+    >
+      +
+    </button>
   );
 }
 
