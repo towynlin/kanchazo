@@ -13,7 +13,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import * as schema from "../lib/db/schema";
 import { createInvitation } from "../lib/db/queries/invitations";
-import { normalizePhone } from "../lib/domain/phone";
 import { generateToken } from "../lib/auth/tokens";
 import { INVITE_EXPIRY_DAYS } from "../lib/domain/invites";
 import { LoggerSmsProvider } from "../lib/sms/logger";
@@ -25,9 +24,10 @@ if (!coachPhone) {
   process.exit(1);
 }
 
-const phone = normalizePhone(coachPhone);
+// Basic E.164 check — full carrier validation is not needed for a seed script
+const phone = /^\+[1-9]\d{6,14}$/.test(coachPhone) ? coachPhone : null;
 if (!phone) {
-  console.error("Invalid phone number:", coachPhone);
+  console.error("Invalid phone number (expected E.164 like +14155550100):", coachPhone);
   process.exit(1);
 }
 

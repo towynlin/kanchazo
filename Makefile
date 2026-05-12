@@ -34,8 +34,8 @@ build:
 	npm run build
 
 seed-admin:
-	@if [ -z "$(PHONE)" ]; then echo "Usage: make seed-admin PHONE=+15555550100"; exit 1; fi
-	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo tsx scripts/seed-admin.ts $(PHONE)
+	@if [ -z "$(PHONE)" ]; then echo "Usage: make seed-admin PHONE=+14155550100"; exit 1; fi
+	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo npx tsx scripts/seed-admin.ts $(PHONE)
 
 clean:
 	docker compose down -v

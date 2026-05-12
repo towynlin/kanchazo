@@ -44,7 +44,7 @@ That command starts Postgres in Docker, runs all migrations, and starts the Next
 The app is invite-only, so you need to create an invitation to get your first user in:
 
 ```bash
-make seed-admin PHONE=+15555550100
+make seed-admin PHONE=+14155550100
 ```
 
 The invite link is printed to the console. Open it to complete signup, create your first team, and start inviting parents.
@@ -155,7 +155,7 @@ Migrations run automatically on each deploy before the server starts.
 **5. Seed the first coach:**
 
 ```bash
-fly ssh console -C "npm run migrate && tsx scripts/seed-admin.ts +15555550100"
+fly ssh console -C "npm run migrate && tsx scripts/seed-admin.ts +14155550100"
 ```
 
 The invite link is printed to the console. Or set `NEXT_PUBLIC_APP_URL` before running so the link points to your live domain.

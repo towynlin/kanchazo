@@ -169,6 +169,7 @@ function AuthForm() {
                     onChange={(e) => setLocalPhone(e.target.value)}
                     required
                     className="flex-1 px-3 py-3 border border-gray-300 rounded-r-xl text-base
+                               text-gray-900 placeholder:text-gray-400
                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
