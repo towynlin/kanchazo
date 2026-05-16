@@ -155,7 +155,7 @@ Migrations run automatically on each deploy before the server starts.
 **5. Seed the first coach:**
 
 ```bash
-fly ssh console -C "npm run migrate && tsx scripts/seed-admin.ts +14155550100"
+fly ssh console -C "npx tsx scripts/seed-admin.ts +14155550100"
 ```
 
 The invite link is printed to the console. Or set `NEXT_PUBLIC_APP_URL` before running so the link points to your live domain.
