@@ -59,13 +59,13 @@ function InvitePageContent() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center p-8 text-center bg-mk-bg">
         <div>
           <div className="text-5xl mb-4">😕</div>
-          <h1 className="text-xl font-bold mb-2">
+          <h1 className="font-display font-extrabold text-[22px] text-mk-text mb-2">
             {loadError === "expired" ? "Invite expired" : "Invite not found"}
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-mk-text-secondary text-sm font-body">
             {loadError === "expired"
               ? "This invitation has expired or was already used. Ask your coach to resend."
               : "This invitation link isn't valid."}
@@ -77,8 +77,8 @@ function InvitePageContent() {
 
   if (!info) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Loading invitation…</div>
+      <div className="min-h-screen flex items-center justify-center bg-mk-bg">
+        <div className="text-mk-text-muted font-body">Loading invitation…</div>
       </div>
     );
   }
@@ -87,20 +87,26 @@ function InvitePageContent() {
   const teamLabel = info.team ? ` to ${info.team.name}` : "";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-mk-bg">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🏆</div>
-          <h1 className="text-2xl font-bold mb-1">You're invited!</h1>
-          <p className="text-gray-500 text-sm">
-            Join Kanchazo as a {roleLabel}
+          <div className="text-5xl mb-3">⚽</div>
+          <h1 className="font-display font-extrabold text-[30px] text-mk-text mb-1 leading-tight">
+            You&apos;re invited!
+          </h1>
+          <p className="text-mk-text-secondary text-sm font-body">
+            Join{" "}
+            <span className="text-mk-sky font-extrabold">
+              Kanch<span className="text-mk-grass">azo</span>
+            </span>{" "}
+            as a {roleLabel}
             {teamLabel}.
           </p>
         </div>
 
         <form onSubmit={handleAccept} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your name</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">Your name</label>
             <input
               type="text"
               autoComplete="name"
@@ -108,13 +114,15 @@ function InvitePageContent() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">
+              Phone number
+            </label>
             <input
               type="tel"
               inputMode="tel"
@@ -123,21 +131,21 @@ function InvitePageContent() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
 
-          {submitError && <p className="text-red-600 text-sm">{submitError}</p>}
+          {submitError && <p className="text-mk-no-text text-sm font-body">{submitError}</p>}
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-mk-text-muted font-body">
             After accepting, you&apos;ll receive a sign-in link to verify your number.
           </p>
 
           <button
             type="submit"
             disabled={submitting || !name || !phone}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-medium text-base
+            className="w-full py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
                        disabled:opacity-50"
           >
             {submitting ? "Joining…" : "Accept invitation"}

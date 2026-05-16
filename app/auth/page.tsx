@@ -87,15 +87,22 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-mk-bg">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-1">Kanchazo</h1>
-          <p className="text-gray-500 text-sm">Youth sports team manager</p>
+          <h1 className="font-display font-extrabold text-[34px] text-mk-sky leading-none mb-2">
+            Kanch<span className="text-mk-grass">azo</span>
+          </h1>
+          <p
+            className="font-body font-bold text-[11px] text-mk-text-secondary uppercase"
+            style={{ letterSpacing: "0.14em" }}
+          >
+            Youth sports team manager
+          </p>
         </div>
 
         {(error === "invalid" || error === "missing") && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-mk-no-bg border border-mk-no-bg rounded-mk-md text-mk-no-text text-sm font-body">
             {error === "invalid"
               ? "That sign-in link is invalid or has expired."
               : "Sign-in link is missing."}
@@ -105,8 +112,10 @@ function AuthForm() {
         {sent ? (
           <div className="text-center">
             <div className="text-4xl mb-4">📱</div>
-            <h2 className="text-xl font-semibold mb-2">Check your messages</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <h2 className="font-display font-extrabold text-[22px] text-mk-text mb-2">
+              Check your messages
+            </h2>
+            <p className="text-mk-text-secondary text-sm mb-6 font-body">
               We sent a sign-in link to {fullPhone}. It expires in 5 minutes.
             </p>
             <button
@@ -114,7 +123,7 @@ function AuthForm() {
                 setSent(false);
                 setLocalPhone("");
               }}
-              className="text-blue-600 text-sm underline"
+              className="text-mk-sky text-sm underline font-body font-bold"
             >
               Try a different number
             </button>
@@ -124,21 +133,29 @@ function AuthForm() {
             <button
               onClick={handlePasskey}
               disabled={loading}
-              className="w-full mb-4 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium text-base
+              className="w-full mb-4 py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
                          disabled:opacity-50 flex items-center justify-center gap-2"
             >
               🔑 Sign in with passkey
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-gray-400 text-xs">or</span>
-              <div className="flex-1 h-px bg-gray-200" />
+              <div className="flex-1 h-px bg-mk-border-card" />
+              <span
+                className="text-mk-text-muted text-[10px] font-body font-bold uppercase"
+                style={{ letterSpacing: "0.14em" }}
+              >
+                or
+              </span>
+              <div className="flex-1 h-px bg-mk-border-card" />
             </div>
 
             <form onSubmit={handleSendOtp} className="space-y-3">
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-body font-bold text-mk-text mb-1"
+                >
                   Phone number
                 </label>
                 <div className="flex">
@@ -149,9 +166,9 @@ function AuthForm() {
                       setDialCode(e.target.value);
                       setLocalPhone("");
                     }}
-                    className="px-2 py-3 bg-gray-100 border border-gray-300 border-r-0 rounded-l-xl
-                               text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
-                               focus:border-transparent"
+                    className="px-2 py-3 bg-mk-surface border border-mk-border-card border-r-0 rounded-l-mk-md
+                               text-mk-text text-sm focus:outline-none focus:ring-2 focus:ring-mk-sky
+                               focus:border-transparent font-body"
                   >
                     {COUNTRY_CODES.map((c) => (
                       <option key={c.dial} value={c.dial}>
@@ -168,19 +185,19 @@ function AuthForm() {
                     value={localPhone}
                     onChange={(e) => setLocalPhone(e.target.value)}
                     required
-                    className="flex-1 px-3 py-3 border border-gray-300 rounded-r-xl text-base
-                               text-gray-900 placeholder:text-gray-400
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-3 border border-mk-border-card rounded-r-mk-md text-base
+                               text-mk-text placeholder:text-mk-text-muted bg-mk-bg
+                               focus:outline-none focus:ring-2 focus:ring-mk-sky focus:border-transparent font-body"
                   />
                 </div>
               </div>
 
-              {err && <p className="text-red-600 text-sm">{err}</p>}
+              {err && <p className="text-mk-no-text text-sm font-body">{err}</p>}
 
               <button
                 type="submit"
                 disabled={loading || !localPhone}
-                className="w-full py-3 px-4 bg-gray-900 text-white rounded-xl font-medium text-base
+                className="w-full py-3 px-4 bg-mk-text text-white rounded-mk-md font-body font-extrabold text-base
                            disabled:opacity-50"
               >
                 {loading ? "Sending…" : "Send me a sign-in link"}

@@ -38,17 +38,25 @@ function OnboardForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-mk-bg">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">Welcome to Kanchazo!</h1>
-          <p className="text-gray-500 text-sm">Just a couple details to get started.</p>
+          <h1 className="font-display font-extrabold text-[30px] text-mk-text leading-tight mb-2">
+            Welcome to{" "}
+            <span className="text-mk-sky">
+              Kanch<span className="text-mk-grass">azo</span>
+            </span>
+            !
+          </h1>
+          <p className="text-mk-text-secondary text-sm font-body">
+            Just a couple details to get started.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your name</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">Your name</label>
             <input
               type="text"
               autoComplete="name"
@@ -56,14 +64,14 @@ function OnboardForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">
+              Email <span className="text-mk-text-muted font-normal">(optional)</span>
             </label>
             <input
               type="email"
@@ -72,17 +80,17 @@ function OnboardForm() {
               placeholder="jane@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && <p className="text-mk-no-text text-sm font-body">{error}</p>}
 
           <button
             type="submit"
             disabled={loading || !name}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-medium text-base
+            className="w-full py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
                        disabled:opacity-50"
           >
             {loading ? "Creating account…" : "Get started"}

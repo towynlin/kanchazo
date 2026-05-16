@@ -1,7 +1,22 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
+import { Syne, Figtree } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-syne",
+  display: "swap",
+});
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-figtree",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Kanchazo",
@@ -19,16 +34,16 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#2563eb",
+  themeColor: "#0369a1",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`h-full ${syne.variable} ${figtree.variable}`}>
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="min-h-full antialiased bg-white text-gray-900">
+      <body className="min-h-full antialiased bg-mk-bg text-mk-text font-body">
         <ServiceWorkerRegistrar />
         {children}
       </body>

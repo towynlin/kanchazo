@@ -13,20 +13,22 @@ export default function NoTeamState({ canCreateTeam }: Props) {
   return (
     <>
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="text-5xl mb-4">🏆</div>
-        <h2 className="text-xl font-semibold mb-2">No teams yet</h2>
+        <div className="text-5xl mb-4">⚽</div>
+        <h2 className="font-display font-extrabold text-[22px] text-mk-text mb-2">No teams yet</h2>
         {canCreateTeam ? (
           <>
-            <p className="text-gray-500 text-sm mb-6">Create your first team to get started.</p>
+            <p className="text-mk-text-secondary text-sm font-body mb-6">
+              Create your first team to get started.
+            </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium"
+              className="px-6 py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
             >
               Create a team
             </button>
           </>
         ) : (
-          <p className="text-gray-500 text-sm">
+          <p className="text-mk-text-secondary text-sm font-body">
             You&apos;ll be added to a team via an invitation link from your coach.
           </p>
         )}
