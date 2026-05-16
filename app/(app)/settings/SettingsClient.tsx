@@ -214,40 +214,36 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
   }
 
   return (
-    <div className="pb-8">
-      <div className="px-4 py-4 border-b border-gray-200">
-        <h1 className="text-xl font-bold">Settings</h1>
-      </div>
+    <div className="pb-8 px-[18px] pt-4">
+      <h1 className="font-display font-extrabold text-[22px] text-mk-text mb-4">Settings</h1>
 
       {/* Profile */}
-      <section className="px-4 py-4 border-b border-gray-200">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Profile
-        </h2>
+      <section className="mb-5">
+        <h2 className="font-display font-extrabold text-[15px] text-mk-text mb-[10px]">Profile</h2>
         <form onSubmit={handleSaveProfile} className="space-y-3">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-body font-bold text-mk-text mb-1">Phone</label>
             {changingPhone ? (
               <div className="space-y-2">
                 {phoneStep === "enter" ? (
@@ -257,15 +253,17 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
                       placeholder="+1 415 555 0100"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
                     />
-                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    {phoneError && (
+                      <p className="text-xs text-mk-no-text font-body">{phoneError}</p>
+                    )}
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={handleSendPhoneOtp}
                         disabled={phoneSending || !newPhone}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                        className="px-4 py-2 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
                       >
                         {phoneSending ? "Sending…" : "Send code"}
                       </button>
@@ -276,7 +274,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
                           setPhoneError(null);
                           setNewPhone("");
                         }}
-                        className="px-4 py-2 text-gray-600 text-sm"
+                        className="px-4 py-2 text-mk-text-secondary text-sm font-body font-bold"
                       >
                         Cancel
                       </button>
@@ -284,7 +282,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-mk-text-secondary font-body">
                       Enter the sign-in link token sent to {newPhone}
                     </p>
                     <input
@@ -292,22 +290,24 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
                       placeholder="Paste token from the link"
                       value={phoneOtp}
                       onChange={(e) => setPhoneOtp(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
                     />
-                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    {phoneError && (
+                      <p className="text-xs text-mk-no-text font-body">{phoneError}</p>
+                    )}
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={handleVerifyPhone}
                         disabled={phoneSending || !phoneOtp}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                        className="px-4 py-2 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
                       >
                         {phoneSending ? "Verifying…" : "Confirm"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setPhoneStep("enter")}
-                        className="px-4 py-2 text-gray-600 text-sm"
+                        className="px-4 py-2 text-mk-text-secondary text-sm font-body font-bold"
                       >
                         Back
                       </button>
@@ -317,13 +317,13 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-base text-gray-600">
+                <div className="flex-1 px-3 py-2.5 bg-mk-surface rounded-mk-md text-base text-mk-text-secondary font-body border border-mk-border-card">
                   {user.phone}
                 </div>
                 <button
                   type="button"
                   onClick={() => setChangingPhone(true)}
-                  className="text-sm text-blue-600 whitespace-nowrap"
+                  className="text-sm text-mk-sky whitespace-nowrap font-body font-extrabold"
                 >
                   Change
                 </button>
@@ -333,7 +333,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
           <button
             type="submit"
             disabled={saving}
-            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2.5 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
           >
             {saved ? "Saved ✓" : saving ? "Saving…" : "Save changes"}
           </button>
@@ -341,19 +341,22 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
       </section>
 
       {/* Passkeys */}
-      <section className="px-4 py-4 border-b border-gray-200">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Passkeys
-        </h2>
+      <section className="mb-5 pt-5 border-t border-mk-border-card">
+        <h2 className="font-display font-extrabold text-[15px] text-mk-text mb-[10px]">Passkeys</h2>
         {passkeys.length === 0 && (
-          <p className="text-sm text-gray-500 mb-3">No passkeys added yet.</p>
+          <p className="text-sm text-mk-text-secondary mb-3 font-body">No passkeys added yet.</p>
         )}
         <div className="space-y-2 mb-3">
           {passkeys.map((pk) => (
-            <div key={pk.id} className="flex items-center justify-between py-2">
+            <div
+              key={pk.id}
+              className="flex items-center justify-between bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5"
+            >
               <div>
-                <div className="text-sm font-medium">{pk.deviceName ?? "Passkey"}</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-sm font-body font-extrabold text-mk-text">
+                  {pk.deviceName ?? "Passkey"}
+                </div>
+                <div className="text-xs text-mk-text-muted font-body">
                   Added {new Date(pk.createdAt).toLocaleDateString()}
                   {pk.lastUsedAt && ` · Used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
                 </div>
@@ -364,7 +367,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
                   await fetch(`/api/auth/passkey/${pk.id}`, { method: "DELETE" });
                   router.refresh();
                 }}
-                className="text-red-500 text-sm px-2 py-1 min-h-0"
+                className="text-mk-no-text text-sm px-2 py-1 min-h-0 font-body font-bold"
                 style={{ minHeight: "auto" }}
               >
                 Remove
@@ -375,18 +378,16 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
         <button
           onClick={handleAddPasskey}
           disabled={addingPasskey}
-          className="px-4 py-2.5 border border-blue-600 text-blue-600 rounded-xl text-sm font-medium disabled:opacity-50"
+          className="px-4 py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
         >
           {addingPasskey ? "Setting up…" : "+ Add passkey for this device"}
         </button>
       </section>
 
       {/* Calendar */}
-      <section className="px-4 py-4 border-b border-gray-200">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
-          Calendar feed
-        </h2>
-        <p className="text-xs text-gray-500 mb-3">
+      <section className="mb-5 pt-5 border-t border-mk-border-card">
+        <h2 className="font-display font-extrabold text-[15px] text-mk-text mb-1">Calendar feed</h2>
+        <p className="text-xs text-mk-text-secondary mb-3 font-body">
           Subscribe to your team events in Apple Calendar, Google Calendar, or any iCal app.
         </p>
         {icalUrl ? (
@@ -395,11 +396,11 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
               readOnly
               value={icalUrl}
               onClick={(e) => (e.target as HTMLInputElement).select()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs text-gray-700 bg-gray-50 select-all"
+              className="w-full px-3 py-2 border border-mk-border-card rounded-mk-md text-xs text-mk-text bg-mk-surface select-all font-body"
             />
             <a
               href={`webcal://${icalUrl.replace(/^https?:\/\//, "")}`}
-              className="block text-center py-2.5 border border-blue-600 text-blue-600 rounded-xl text-sm font-medium"
+              className="block text-center py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold"
             >
               Subscribe in Calendar app
             </a>
@@ -408,7 +409,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
           <button
             onClick={handleGetIcalUrl}
             disabled={loadingIcal}
-            className="px-4 py-2.5 border border-blue-600 text-blue-600 rounded-xl text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
           >
             {loadingIcal ? "Loading…" : "Get calendar link"}
           </button>
@@ -417,20 +418,20 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
 
       {/* Push notifications */}
       {pushSupported && (
-        <section className="px-4 py-4 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+        <section className="mb-5 pt-5 border-t border-mk-border-card">
+          <h2 className="font-display font-extrabold text-[15px] text-mk-text mb-1">
             Notifications
           </h2>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-mk-text-secondary mb-3 font-body">
             Get notified about new chat messages and schedule changes.
           </p>
           <button
             onClick={handleTogglePush}
             disabled={pushLoading}
-            className={`px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 ${
+            className={`px-4 py-2.5 rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50 ${
               pushEnabled
-                ? "bg-gray-100 text-gray-700 border border-gray-300"
-                : "border border-blue-600 text-blue-600"
+                ? "bg-mk-surface text-mk-text border border-mk-border-card"
+                : "border-[1.5px] border-mk-sky text-mk-sky"
             }`}
           >
             {pushLoading ? "…" : pushEnabled ? "Disable notifications" : "Enable notifications"}
@@ -438,19 +439,26 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
 
           {pushEnabled && teams.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-medium text-gray-500 mb-2">Notify me for:</p>
+              <p className="text-xs font-body font-bold text-mk-text-secondary mb-2">
+                Notify me for:
+              </p>
               <div className="space-y-2">
                 {teams.map((team) => {
                   const isMuted = mutedTeams.has(team.id);
                   const isLoading = teamPrefLoading === team.id;
                   return (
-                    <div key={team.id} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">{team.name}</span>
+                    <div
+                      key={team.id}
+                      className="flex items-center justify-between bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5"
+                    >
+                      <span className="text-sm text-mk-text font-body font-extrabold">
+                        {team.name}
+                      </span>
                       <button
                         onClick={() => handleToggleTeamMute(team.id)}
                         disabled={isLoading}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                          disabled:opacity-50 ${isMuted ? "bg-gray-200" : "bg-blue-600"}`}
+                          disabled:opacity-50 ${isMuted ? "bg-mk-border" : "bg-mk-sky"}`}
                         role="switch"
                         aria-checked={!isMuted}
                         aria-label={`Notifications for ${team.name}`}
@@ -470,27 +478,27 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
       )}
 
       {/* Sign out */}
-      <section className="px-4 py-4 border-b border-gray-200 space-y-2">
+      <section className="mb-5 pt-5 border-t border-mk-border-card space-y-2">
         <button
           onClick={() => handleSignOut(false)}
-          className="w-full py-3 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium"
+          className="w-full py-3 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
         >
           Sign out
         </button>
         <button
           onClick={() => handleSignOut(true)}
-          className="w-full py-3 text-red-600 text-sm font-medium"
+          className="w-full py-3 text-mk-no-text text-sm font-body font-extrabold"
         >
           Sign out everywhere
         </button>
       </section>
 
       {/* Delete account */}
-      <section className="px-4 py-4 space-y-2">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+      <section className="pt-5 border-t border-mk-border-card space-y-2">
+        <h2 className="font-display font-extrabold text-[15px] text-mk-no-text mb-1">
           Danger zone
         </h2>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-mk-text-secondary font-body">
           Permanently deletes your account. Your chat messages will be anonymized. This cannot be
           undone.
         </p>
@@ -505,7 +513,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
             });
             if (res.ok) router.push("/auth");
           }}
-          className="w-full py-3 border border-red-300 text-red-600 rounded-xl text-sm font-medium"
+          className="w-full py-3 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
         >
           Delete my account
         </button>

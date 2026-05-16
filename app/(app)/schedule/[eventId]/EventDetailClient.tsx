@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AvailabilitySummary } from "@/lib/domain/availability";
 import EditEventModal from "@/components/EditEventModal";
+import Avatar from "@/components/Avatar";
+import GrassStripe from "@/components/GrassStripe";
 
 interface EventData {
   id: string;
@@ -32,11 +34,16 @@ interface Props {
   summary: AvailabilitySummary;
 }
 
-const STATUS_LABELS = { yes: "Yes ✓", no: "No ✗", maybe: "Maybe ?" } as const;
-const STATUS_COLORS = {
-  yes: "bg-green-100 text-green-700",
-  no: "bg-red-100 text-red-700",
-  maybe: "bg-yellow-100 text-yellow-700",
+const STATUS_LABELS = { yes: "In!", no: "Can't", maybe: "Maybe" } as const;
+const STATUS_BADGE = {
+  yes: "bg-mk-yes-bg text-mk-yes-text",
+  maybe: "bg-mk-maybe-bg text-mk-maybe-text",
+  no: "bg-mk-no-bg text-mk-no-text",
+} as const;
+const STATUS_BADGE_LABEL = {
+  yes: "✓ In!",
+  maybe: "Maybe",
+  no: "Can't make it",
 } as const;
 
 export default function EventDetailClient({
@@ -103,65 +110,103 @@ export default function EventDetailClient({
   }
 
   const myPlayers = players.filter((p) => p.isMyPlayer);
-  // reserved for future filtering
+  const showFieldStripe = event.kind === "game" && !event.isCancelled;
 
   return (
     <div className="pb-8">
-      {/* Header */}
-      <div className="px-4 py-4 border-b border-gray-200">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
+      {/* Hero card */}
+      <div className="px-[18px] pt-4">
+        <div className="rounded-mk-lg border-[1.5px] border-mk-border-card shadow-mk-game overflow-hidden bg-mk-bg">
+          <div className="bg-mk-surface-blue px-5 pt-4 pb-4">
+            <div
+              className="font-body font-bold text-[10px] text-mk-sky uppercase mb-1"
+              style={{ letterSpacing: "0.14em" }}
+            >
+              {event.kind === "game" ? "⚽ Game day" : "🏃 Practice"} · {event.dateLabel}
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
               <h1
-                className={`text-xl font-bold ${event.isCancelled ? "line-through text-gray-400" : ""}`}
+                className={`font-display font-extrabold text-[22px] text-mk-text leading-tight ${event.isCancelled ? "line-through text-mk-text-secondary" : ""}`}
               >
                 {event.title}
               </h1>
               {event.isCancelled && (
-                <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                <span className="font-body font-extrabold text-[10px] bg-mk-no-bg text-mk-no-text px-2.5 py-1 rounded-full shrink-0">
                   Cancelled
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              {event.dateLabel} · {event.timeLabel}
+            <p className="font-body font-bold text-[11px] text-mk-text-secondary mt-1">
+              {event.timeLabel}
             </p>
-            <p className="text-sm text-gray-600 mt-0.5">📍 {event.location}</p>
+          </div>
+          {showFieldStripe && <GrassStripe />}
+          <div className="bg-mk-bg px-5 py-3 flex items-center gap-2">
+            <span aria-hidden className="inline-block w-[6px] h-[6px] rounded-full bg-mk-grass" />
+            <span className="font-body font-bold text-[11px] text-mk-text-secondary">
+              {event.location}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Availability summary */}
-      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-        <div className="flex gap-4 text-sm">
-          <span className="text-green-700 font-medium">{summary.yes} yes</span>
-          <span className="text-yellow-700 font-medium">{summary.maybe} maybe</span>
-          <span className="text-red-700 font-medium">{summary.no} no</span>
-          {summary.unanswered > 0 && (
-            <span className="text-gray-500">{summary.unanswered} unanswered</span>
-          )}
-        </div>
+      {/* Availability summary stat pills */}
+      <div className="grid grid-cols-3 gap-[10px] mt-3 px-[18px]">
+        {(
+          [
+            { value: summary.yes, label: "In", color: "text-mk-yes-text" },
+            { value: summary.maybe, label: "Maybe", color: "text-mk-maybe-text" },
+            { value: summary.no, label: "Out", color: "text-mk-no-text" },
+          ] as const
+        ).map((p) => (
+          <div
+            key={p.label}
+            className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border py-3 text-center"
+          >
+            <div className={`font-display font-extrabold text-[22px] leading-none ${p.color}`}>
+              {p.value}
+            </div>
+            <div
+              className="font-body font-bold text-[9px] text-mk-text-muted uppercase mt-1"
+              style={{ letterSpacing: "0.12em" }}
+            >
+              {p.label}
+            </div>
+          </div>
+        ))}
       </div>
+      {summary.unanswered > 0 && (
+        <p className="px-[18px] mt-2 font-body font-bold text-[11px] text-mk-text-secondary">
+          {summary.unanswered} no reply
+        </p>
+      )}
 
       {/* My players */}
       {myPlayers.length > 0 && !event.isCancelled && (
-        <div className="px-4 py-3 border-b border-gray-100">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+        <div className="px-[18px] mt-5">
+          <h3 className="font-display font-extrabold text-[15px] text-mk-text mb-[10px]">
             My players
           </h3>
           <div className="space-y-2">
             {myPlayers.map((p) => {
               const status = availability[p.id] ?? "maybe";
               return (
-                <div key={p.id} className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium">{p.name}</span>
-                  <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs">
+                <div
+                  key={p.id}
+                  className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5 flex items-center gap-3"
+                >
+                  <Avatar name={p.name} seed={p.id} />
+                  <span className="font-body font-extrabold text-[14px] text-mk-text flex-1 min-w-0 truncate">
+                    {p.name}
+                  </span>
+                  <div className="flex rounded-full overflow-hidden border-[1.5px] border-mk-border-card text-xs">
                     {(["yes", "maybe", "no"] as const).map((s) => (
                       <button
                         key={s}
                         onClick={() => setAvail(p.id, s)}
-                        className={`px-3 py-1.5 min-h-[36px] font-medium transition-colors
-                          ${status === s ? STATUS_COLORS[s] : "bg-white text-gray-600"}`}
+                        className={`px-3 py-1.5 min-h-[36px] font-body font-extrabold text-[11px] transition-colors ${
+                          status === s ? STATUS_BADGE[s] : "bg-mk-bg text-mk-text-secondary"
+                        }`}
                       >
                         {STATUS_LABELS[s]}
                       </button>
@@ -175,20 +220,41 @@ export default function EventDetailClient({
       )}
 
       {/* All players */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-          All players ({players.length})
+      <div className="px-[18px] mt-5">
+        <h3 className="font-display font-extrabold text-[15px] text-mk-text mb-[10px]">
+          Who's coming? 🙋{" "}
+          <span className="font-body font-bold text-[11px] text-mk-text-secondary">
+            · {players.length}
+          </span>
         </h3>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {players.map((p) => {
             const status = availability[p.id] ?? "maybe";
             return (
-              <div key={p.id} className="flex items-center justify-between py-1">
-                <span className={`text-sm ${p.isMyPlayer ? "font-medium" : "text-gray-700"}`}>
-                  {p.name}
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[status]}`}>
-                  {status}
+              <div
+                key={p.id}
+                className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5 flex items-center gap-3"
+              >
+                <Avatar name={p.name} seed={p.id} />
+                <div className="flex-1 min-w-0">
+                  <div
+                    className={`font-body font-extrabold text-[14px] ${p.isMyPlayer ? "text-mk-text" : "text-mk-text"}`}
+                  >
+                    {p.name}
+                  </div>
+                  {p.isMyPlayer && (
+                    <div
+                      className="font-body font-bold text-[10px] text-mk-sky uppercase"
+                      style={{ letterSpacing: "0.1em" }}
+                    >
+                      Your player
+                    </div>
+                  )}
+                </div>
+                <span
+                  className={`font-body font-extrabold text-[10px] px-2.5 py-1 rounded-full ${STATUS_BADGE[status]}`}
+                >
+                  {STATUS_BADGE_LABEL[status]}
                 </span>
               </div>
             );
@@ -197,13 +263,13 @@ export default function EventDetailClient({
       </div>
 
       {/* Notes */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</h3>
+      <div className="px-[18px] mt-5">
+        <div className="flex items-center justify-between mb-[10px]">
+          <h3 className="font-display font-extrabold text-[15px] text-mk-text">Notes</h3>
           {isCoach && !editingNotes && (
             <button
               onClick={() => setEditingNotes(true)}
-              className="text-xs text-blue-600 min-h-0"
+              className="text-[11px] text-mk-sky font-body font-bold min-h-0"
               style={{ minHeight: "auto" }}
             >
               Edit
@@ -215,33 +281,32 @@ export default function EventDetailClient({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm resize-none min-h-[80px]
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-mk-border-card rounded-mk-md text-sm resize-none min-h-[80px] focus:outline-none focus:ring-2 focus:ring-mk-sky bg-mk-bg font-body"
               autoFocus
             />
             <div className="flex gap-2 mt-2">
               <button
                 onClick={saveNotes}
                 disabled={savingNotes}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium disabled:opacity-50"
+                className="px-3 py-1.5 bg-mk-sky text-white rounded-mk-sm text-xs font-body font-extrabold disabled:opacity-50"
               >
                 {savingNotes ? "Saving…" : "Save"}
               </button>
               <button
                 onClick={() => setEditingNotes(false)}
-                className="px-3 py-1.5 text-gray-600 text-xs"
+                className="px-3 py-1.5 text-mk-text-secondary text-xs font-body font-bold"
               >
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">
-              {notes || <span className="text-gray-400 italic">No notes</span>}
+          <div className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-3">
+            <p className="text-sm text-mk-text whitespace-pre-wrap font-body">
+              {notes || <span className="text-mk-text-muted italic">No notes</span>}
             </p>
             {event.notesUpdatedAt && event.notesEditorName && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-[10px] text-mk-text-muted mt-1 font-body">
                 Edited{" "}
                 {new Date(event.notesUpdatedAt).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -250,17 +315,17 @@ export default function EventDetailClient({
                 by {event.notesEditorName}
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
 
       {/* Coach actions */}
       {isCoach && (
-        <div className="px-4 py-3 space-y-2">
+        <div className="px-[18px] mt-5 space-y-2">
           {!event.isCancelled && (
             <button
               onClick={() => setShowEdit(true)}
-              className="w-full py-3 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium"
+              className="w-full py-3 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
             >
               Edit event
             </button>
@@ -269,14 +334,14 @@ export default function EventDetailClient({
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="w-full py-3 border border-yellow-400 text-yellow-700 rounded-xl text-sm font-medium disabled:opacity-50"
+              className="w-full py-3 border-[1.5px] border-mk-maybe-text text-mk-maybe-text rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50 bg-mk-bg"
             >
               {cancelling ? "Cancelling…" : "Cancel event"}
             </button>
           )}
           <button
             onClick={handleDelete}
-            className="w-full py-3 border border-red-300 text-red-600 rounded-xl text-sm font-medium"
+            className="w-full py-3 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
           >
             Delete event
           </button>

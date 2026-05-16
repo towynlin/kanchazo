@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import InviteForm from "@/components/InviteForm";
+import Avatar from "@/components/Avatar";
 
 interface Member {
   userId: string;
@@ -50,7 +51,7 @@ export default function RosterClient({
 
   return (
     <>
-      <div className="pb-4">
+      <div className="pb-4 px-[18px] pt-4">
         <Section
           title={`Coaches (${visibleCoaches.length})`}
           members={visibleCoaches}
@@ -70,24 +71,28 @@ export default function RosterClient({
         />
         {isCoach && orphanPlayers.length > 0 && (
           <>
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 mt-2">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Pending guardians ({orphanPlayers.length})
-              </h2>
-            </div>
-            {orphanPlayers.map((p) => (
-              <div
-                key={p.id}
-                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between"
-              >
-                <div>
-                  <span className="font-medium text-gray-900">{p.name}</span>
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">
-                    Awaiting guardian
+            <SectionHeader title={`Pending guardians (${orphanPlayers.length})`} />
+            <div className="space-y-2">
+              {orphanPlayers.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5 flex items-center gap-3"
+                >
+                  <Avatar name={p.name} seed={p.id} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-body font-extrabold text-[14px] text-mk-text">
+                      {p.name}
+                    </div>
+                    <div className="font-body font-bold text-[11px] text-mk-text-secondary">
+                      Awaiting guardian
+                    </div>
+                  </div>
+                  <span className="font-body font-extrabold text-[10px] bg-mk-maybe-bg text-mk-maybe-text px-2.5 py-1 rounded-full">
+                    Pending
                   </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </>
         )}
       </div>
@@ -96,7 +101,7 @@ export default function RosterClient({
         <button
           onClick={() => setShowInvite(true)}
           aria-label="Invite someone"
-          className="fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg text-2xl flex items-center justify-center z-10"
+          className="fixed bottom-24 right-5 w-14 h-14 bg-mk-sky text-white rounded-full shadow-mk-game text-2xl flex items-center justify-center z-10"
         >
           +
         </button>
@@ -122,6 +127,14 @@ export default function RosterClient({
   );
 }
 
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-baseline justify-between mt-5 mb-[10px]">
+      <h2 className="font-display font-extrabold text-[15px] text-mk-text">{title}</h2>
+    </div>
+  );
+}
+
 function Section({
   title,
   members,
@@ -139,19 +152,19 @@ function Section({
 }) {
   return (
     <>
-      <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 mt-2 first:mt-0">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</h2>
+      <SectionHeader title={title} />
+      <div className="space-y-2">
+        {members.map((m) => (
+          <MemberRow
+            key={m.userId}
+            member={m}
+            isCurrentUser={m.userId === currentUserId}
+            isCoach={isCoach}
+            onAddCoGuardian={onAddCoGuardian}
+            onRemove={m.userId !== currentUserId ? onRemove : undefined}
+          />
+        ))}
       </div>
-      {members.map((m) => (
-        <MemberRow
-          key={m.userId}
-          member={m}
-          isCurrentUser={m.userId === currentUserId}
-          isCoach={isCoach}
-          onAddCoGuardian={onAddCoGuardian}
-          onRemove={m.userId !== currentUserId ? onRemove : undefined}
-        />
-      ))}
     </>
   );
 }
@@ -169,7 +182,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       onClick={handleCopy}
       aria-label={`Copy ${value}`}
-      className="ml-2 text-gray-400 hover:text-gray-600 text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
+      className="ml-2 text-mk-text-secondary text-xs px-1.5 py-0.5 rounded-full border border-mk-border-card hover:text-mk-sky min-h-[44px] min-w-[44px] flex items-center justify-center"
     >
       {copied ? "✓" : "⎘"}
     </button>
@@ -190,24 +203,39 @@ function MemberRow({
   onRemove?: (userId: string, name: string) => void;
 }) {
   const { user, players } = member;
+  const variant = member.role === "coach" ? "coach" : "player";
   return (
-    <div className="px-4 py-3 border-b border-gray-100">
-      <div className="flex items-center justify-between mb-1">
-        <div className="font-medium text-gray-900">{user.name}</div>
+    <div className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5">
+      <div className="flex items-center gap-3">
+        <Avatar name={user.name} seed={member.userId} variant={variant} />
+        <div className="flex-1 min-w-0">
+          <div className="font-body font-extrabold text-[14px] text-mk-text">
+            {user.name}
+            {isCurrentUser && (
+              <span className="ml-2 font-body font-bold text-[10px] text-mk-sky uppercase tracking-wider">
+                You
+              </span>
+            )}
+          </div>
+          <div className="font-body font-bold text-[11px] text-mk-text-secondary capitalize">
+            {member.role === "coach" ? "Coach" : "Parent / Guardian"}
+          </div>
+        </div>
         {isCoach && onRemove && !isCurrentUser && (
           <button
             onClick={() => onRemove(member.userId, user.name)}
-            className="text-xs text-red-500 px-2 py-1"
+            className="text-xs text-mk-no-text px-2 py-1 font-body font-bold min-h-0"
+            style={{ minHeight: 0 }}
           >
             Remove
           </button>
         )}
       </div>
       {user.email && (
-        <div className="flex items-center gap-1 mt-0.5">
+        <div className="flex items-center gap-1 mt-2">
           <a
             href={`mailto:${user.email}`}
-            className="text-sm text-blue-600 flex-1 min-w-0 truncate"
+            className="text-sm text-mk-sky flex-1 min-w-0 truncate font-body font-semibold"
           >
             {user.email}
           </a>
@@ -215,24 +243,31 @@ function MemberRow({
         </div>
       )}
       <div className="flex items-center gap-1 mt-0.5">
-        <a href={`tel:${user.phone}`} className="text-sm text-blue-600 flex-1">
+        <a
+          href={`tel:${user.phone}`}
+          className="text-sm text-mk-sky flex-1 font-body font-semibold"
+        >
           {user.phone}
         </a>
         <CopyButton value={user.phone} />
       </div>
       {players.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5">
+        <div className="flex flex-wrap gap-1.5 mt-2.5">
           {players.map((p) => (
-            <span key={p.id} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+            <span
+              key={p.id}
+              className="font-body font-extrabold text-[10px] bg-mk-surface-blue text-mk-sky px-2.5 py-1 rounded-full border border-mk-border-card"
+            >
               {p.name}
             </span>
           ))}
           {isCurrentUser && onAddCoGuardian && (
             <button
               onClick={() => onAddCoGuardian(players.map((p) => p.id))}
-              className="text-xs text-blue-600 px-2 py-0.5 rounded-full border border-blue-300"
+              className="font-body font-extrabold text-[10px] text-mk-sky px-2.5 py-1 rounded-full border border-mk-sky min-h-0"
+              style={{ minHeight: 0 }}
             >
-              + Add co-guardian
+              + Co-guardian
             </button>
           )}
         </div>
@@ -301,12 +336,12 @@ function CoGuardianInviteModal({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-20" onClick={onDone} />
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl z-30 max-h-[90vh] overflow-y-auto">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-base font-semibold">Add co-guardian</h2>
+      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-mk-bg rounded-t-[40px] z-30 max-h-[90vh] overflow-y-auto">
+        <div className="p-4 border-b border-mk-border-card flex items-center justify-between">
+          <h2 className="font-display font-extrabold text-[18px] text-mk-text">Add co-guardian</h2>
           <button
             onClick={onDone}
-            className="text-gray-400 text-xl leading-none min-h-0"
+            className="text-mk-text-secondary text-xl leading-none min-h-0"
             style={{ minHeight: "auto" }}
           >
             ✕
@@ -315,10 +350,12 @@ function CoGuardianInviteModal({
         {sent ? (
           <div className="p-6 text-center">
             <div className="text-4xl mb-3">✉️</div>
-            <p className="font-medium text-gray-900 mb-1">Invite sent!</p>
+            <p className="font-display font-extrabold text-[16px] text-mk-text mb-1">
+              Invite sent!
+            </p>
             <button
               onClick={onDone}
-              className="mt-4 w-full py-3 bg-blue-600 text-white rounded-xl font-medium"
+              className="mt-4 w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
             >
               Done
             </button>
@@ -326,7 +363,7 @@ function CoGuardianInviteModal({
         ) : (
           <div className="p-4 space-y-4 pb-8">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-body font-bold text-mk-text mb-1">
                 Share access for
               </label>
               <div className="flex flex-wrap gap-2">
@@ -335,10 +372,10 @@ function CoGuardianInviteModal({
                     key={p.id}
                     type="button"
                     onClick={() => togglePlayer(p.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-body font-extrabold border ${
                       selectedIds.has(p.id)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-300"
+                        ? "bg-mk-sky text-white border-mk-sky"
+                        : "bg-mk-bg text-mk-text border-mk-border-card"
                     }`}
                   >
                     {p.name}
@@ -347,34 +384,37 @@ function CoGuardianInviteModal({
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Their phone</label>
+              <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                Their phone
+              </label>
               <input
                 type="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder="+1 555 000 0000"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base focus:outline-none focus:ring-2 focus:ring-mk-sky bg-mk-bg"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Or their email <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                Or their email{" "}
+                <span className="text-mk-text-secondary font-normal">(optional)</span>
               </label>
               <input
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder="guardian@example.com"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base focus:outline-none focus:ring-2 focus:ring-mk-sky bg-mk-bg"
               />
             </div>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-mk-no-text text-sm">{error}</p>}
             <button
               onClick={handleSubmit}
               disabled={
                 saving || selectedIds.size === 0 || (!contactPhone.trim() && !contactEmail.trim())
               }
-              className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium text-base disabled:opacity-50"
+              className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
             >
               {saving ? "Sending…" : "Send invite"}
             </button>

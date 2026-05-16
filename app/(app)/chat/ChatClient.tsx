@@ -22,7 +22,7 @@ interface Props {
 function linkify(text: string): string {
   return text.replace(
     /(https?:\/\/[^\s]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-blue-600">$1</a>',
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline">$1</a>',
   );
 }
 
@@ -183,11 +183,13 @@ export default function ChatClient({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-mk-bg">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-gray-400 text-sm mt-8">No messages yet. Say hi! 👋</div>
+          <div className="text-center text-mk-text-secondary text-sm mt-8 font-body">
+            No messages yet. Say hi! 👋
+          </div>
         )}
         {messages.map((msg, i) => {
           const isFirstUnread =
@@ -200,9 +202,14 @@ export default function ChatClient({
             <div key={msg.id}>
               {isFirstUnread && (
                 <div className="flex items-center gap-2 my-3 px-2">
-                  <div className="flex-1 h-px bg-blue-200" />
-                  <span className="text-xs text-blue-500 font-medium shrink-0">New messages</span>
-                  <div className="flex-1 h-px bg-blue-200" />
+                  <div className="flex-1 h-px bg-mk-sky-light/40" />
+                  <span
+                    className="text-[10px] text-mk-sky font-body font-extrabold shrink-0 uppercase"
+                    style={{ letterSpacing: "0.14em" }}
+                  >
+                    New messages
+                  </span>
+                  <div className="flex-1 h-px bg-mk-sky-light/40" />
                 </div>
               )}
               <div className={`flex ${msg.isMe ? "justify-end" : "justify-start"}`}>
@@ -210,19 +217,21 @@ export default function ChatClient({
                   className={`max-w-[80%] ${msg.isMe ? "items-end" : "items-start"} flex flex-col gap-0.5`}
                 >
                   {!msg.isMe && (
-                    <span className="text-xs text-gray-500 px-1">
+                    <span className="text-[11px] text-mk-text-secondary font-body font-bold px-1">
                       {msg.senderName ?? "Former member"}
                     </span>
                   )}
                   <div
-                    className={`px-3 py-2 rounded-2xl text-sm chat-body ${
+                    className={`px-3.5 py-2 rounded-2xl text-sm chat-body font-body ${
                       msg.isMe
-                        ? "bg-blue-600 text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                        ? "bg-mk-sky text-white rounded-br-sm"
+                        : "bg-mk-surface text-mk-text rounded-bl-sm border border-mk-border-card"
                     }`}
                     dangerouslySetInnerHTML={{ __html: linkify(msg.body) }}
                   />
-                  <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.sentAt)}</span>
+                  <span className="text-[10px] text-mk-text-muted px-1">
+                    {formatTime(msg.sentAt)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -234,7 +243,7 @@ export default function ChatClient({
       {/* Compose */}
       <form
         onSubmit={handleSend}
-        className="flex items-end gap-2 p-3 border-t border-gray-200 bg-white"
+        className="flex items-end gap-2 p-3 border-t border-mk-border-card bg-mk-bg"
       >
         <textarea
           value={body}
@@ -247,13 +256,13 @@ export default function ChatClient({
           }}
           placeholder="Message…"
           rows={1}
-          className="flex-1 px-3 py-2.5 border border-gray-300 rounded-2xl text-sm resize-none
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32"
+          className="flex-1 px-3 py-2.5 border border-mk-border-card rounded-2xl text-sm resize-none
+                     focus:outline-none focus:ring-2 focus:ring-mk-sky max-h-32 bg-mk-bg font-body"
         />
         <button
           type="submit"
           disabled={!body.trim() || sending}
-          className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center
+          className="w-10 h-10 bg-mk-sky text-white rounded-full flex items-center justify-center
                      disabled:opacity-50 shrink-0 min-h-[40px] min-w-[40px]"
           aria-label="Send"
         >
