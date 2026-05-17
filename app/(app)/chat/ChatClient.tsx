@@ -117,7 +117,10 @@ export default function ChatClient({
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data) as Message & { senderUserId: string };
-          setMessages((prev) => [...prev, { ...msg, isMe: msg.senderUserId === userId }]);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, { ...msg, isMe: msg.senderUserId === userId }];
+          });
         } catch {
           // ignore malformed messages
         }
@@ -173,6 +176,11 @@ export default function ChatClient({
         // Remove optimistic message on failure
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
         setBody(text); // Restore draft
+      } else {
+        const real: Message = await res.json();
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimistic.id ? { ...real, isMe: true } : m)),
+        );
       }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
