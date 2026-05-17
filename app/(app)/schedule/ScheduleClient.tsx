@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import CreateEventModal from "@/components/CreateEventModal";
 import GrassStripe from "@/components/GrassStripe";
 
@@ -44,13 +43,21 @@ export default function ScheduleClient({
   myPlayers,
   initialAvailability,
 }: Props) {
-  const router = useRouter();
   const [events, setEvents] = useState(initialEvents);
   const [availability, setAvailability] = useState(initialAvailability);
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
   const [loadingPast, setLoadingPast] = useState(false);
   const [pastLoaded, setPastLoaded] = useState(false);
+
+  const refreshEvents = useCallback(async () => {
+    const res = await fetch(
+      `/api/teams/${teamId}/events/serialized${pastLoaded ? "?past=true" : ""}`,
+    );
+    if (!res.ok) return;
+    const fresh: SerializedEvent[] = await res.json();
+    setEvents(fresh);
+  }, [teamId, pastLoaded]);
 
   const setAvail = useCallback(
     async (eventId: string, playerId: string, status: "yes" | "no" | "maybe") => {
@@ -139,7 +146,7 @@ export default function ScheduleClient({
             teamId={teamId}
             onCreated={() => {
               setShowCreate(false);
-              router.refresh();
+              refreshEvents();
             }}
             onClose={() => setShowCreate(false)}
           />
@@ -196,7 +203,7 @@ export default function ScheduleClient({
           teamId={teamId}
           onCreated={() => {
             setShowCreate(false);
-            router.refresh();
+            refreshEvents();
           }}
           onClose={() => setShowCreate(false)}
         />
