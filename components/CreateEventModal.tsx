@@ -74,7 +74,7 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
                   key={k}
                   type="button"
                   onClick={() => setKind(k)}
-                  className={`flex-1 py-2.5 text-sm font-body font-extrabold capitalize ${
+                  className={`flex-1 justify-center py-2.5 text-sm font-body font-extrabold capitalize ${
                     kind === k ? "bg-mk-sky text-white" : "bg-mk-bg text-mk-text-secondary"
                   }`}
                 >
@@ -152,7 +152,7 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
                       key={String(v)}
                       type="button"
                       onClick={() => setIsHome(v)}
-                      className={`flex-1 py-2.5 text-sm font-body font-extrabold ${
+                      className={`flex-1 justify-center py-2.5 text-sm font-body font-extrabold ${
                         isHome === v ? "bg-mk-sky text-white" : "bg-mk-bg text-mk-text-secondary"
                       }`}
                     >
@@ -184,7 +184,7 @@ export default function CreateEventModal({ teamId, onCreated, onClose }: Props) 
           <button
             type="submit"
             disabled={saving || !startsAt || !location}
-            className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
+            className="w-full justify-center py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
           >
             {saving ? "Creating…" : "Create event"}
           </button>
