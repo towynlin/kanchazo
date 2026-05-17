@@ -11,6 +11,7 @@ interface Props {
 
 export default function InviteForm({ teamId, onInvited, onClose }: Props) {
   const [invitedRole, setInvitedRole] = useState<"parent" | "coach">("parent");
+  const [selfGuardian, setSelfGuardian] = useState(false);
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [playerNames, setPlayerNames] = useState<string[]>([""]);
@@ -36,6 +37,24 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
     setError(null);
     try {
       const names = playerNames.map((n) => n.trim()).filter(Boolean);
+
+      if (invitedRole === "parent" && selfGuardian) {
+        for (const name of names) {
+          const res = await fetch(`/api/teams/${teamId}/players`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, selfGuardian: true }),
+          });
+          if (!res.ok) {
+            const d = await res.json();
+            setError(d.error ?? "Failed to add player");
+            return;
+          }
+        }
+        onInvited();
+        return;
+      }
+
       const res = await fetch("/api/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,31 +129,59 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
               </div>
             </div>
 
-            {/* Contact */}
-            <div>
-              <label className="block text-sm font-body font-bold text-mk-text mb-1">Phone</label>
-              <input
-                type="tel"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 555 000 0000"
-                className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                           focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-body font-bold text-mk-text mb-1">
-                Email <span className="text-mk-text-muted font-normal">(optional)</span>
-              </label>
-              <input
-                type="email"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="coach@example.com"
-                className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                           focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-              />
-            </div>
+            {/* Self-guardian toggle */}
+            {invitedRole === "parent" && (
+              <button
+                type="button"
+                onClick={() => setSelfGuardian((v) => !v)}
+                className={`w-full py-2.5 px-4 rounded-mk-md border-[1.5px] text-sm font-body font-extrabold text-left flex items-center gap-3 ${
+                  selfGuardian
+                    ? "border-mk-sky bg-mk-surface-blue text-mk-sky"
+                    : "border-mk-border-card bg-mk-bg text-mk-text-secondary"
+                }`}
+              >
+                <span
+                  className={`w-4 h-4 rounded border-[1.5px] flex-shrink-0 flex items-center justify-center text-[10px] ${
+                    selfGuardian ? "border-mk-sky bg-mk-sky text-white" : "border-mk-border-card"
+                  }`}
+                >
+                  {selfGuardian ? "✓" : ""}
+                </span>
+                I&apos;m their guardian
+              </button>
+            )}
+
+            {/* Contact — hidden when coach is adding their own child */}
+            {!(invitedRole === "parent" && selfGuardian) && (
+              <>
+                <div>
+                  <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="+1 555 000 0000"
+                    className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                               focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                    Email <span className="text-mk-text-muted font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="coach@example.com"
+                    className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                               focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+                  />
+                </div>
+              </>
+            )}
 
             {/* Player names for parent invites */}
             {invitedRole === "parent" && (
@@ -177,10 +224,19 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
 
             <button
               type="submit"
-              disabled={saving || (!contactPhone.trim() && !contactEmail.trim())}
+              disabled={
+                saving ||
+                (invitedRole === "parent" && selfGuardian
+                  ? !playerNames.some((n) => n.trim())
+                  : !contactPhone.trim() && !contactEmail.trim())
+              }
               className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
             >
-              {saving ? "Sending…" : "Send invite"}
+              {saving
+                ? "Saving…"
+                : invitedRole === "parent" && selfGuardian
+                  ? "Add to roster"
+                  : "Send invite"}
             </button>
           </form>
         )}
