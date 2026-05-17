@@ -178,9 +178,15 @@ export default function ChatClient({
         setBody(text); // Restore draft
       } else {
         const real: Message = await res.json();
-        setMessages((prev) =>
-          prev.map((m) => (m.id === optimistic.id ? { ...real, isMe: true } : m)),
-        );
+        setMessages((prev) => {
+          // WebSocket may have already delivered the real message before this
+          // response arrived. If so, just drop the optimistic entry; otherwise
+          // swap the optimistic placeholder for the real message.
+          if (prev.some((m) => m.id === real.id)) {
+            return prev.filter((m) => m.id !== optimistic.id);
+          }
+          return prev.map((m) => (m.id === optimistic.id ? { ...real, isMe: true } : m));
+        });
       }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
