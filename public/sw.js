@@ -1,8 +1,11 @@
 // Kanchazo service worker — offline shell caching
-const CACHE_NAME = "kanchazo-v1";
+const CACHE_NAME = "kanchazo-v2";
 const OFFLINE_URL = "/auth";
 
-const PRECACHE_URLS = ["/", "/auth", "/schedule", "/roster", "/chat", "/manifest.json"];
+// Only precache static assets. HTML pages do server-side auth redirects;
+// caching them returns stale content (e.g. /auth after login) or, worse,
+// caches a redirect response that WebKit refuses to consume.
+const PRECACHE_URLS = ["/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -73,17 +76,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const networkFetch = fetch(request)
+  // Navigation requests: network-first. Server-rendered pages do auth-based
+  // redirects, so a cached copy is wrong as soon as login state changes.
+  // Also: WebKit refuses to consume an SW response with `redirected: true`,
+  // so we never cache or return such responses for navigations.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
-          if (response.ok && url.origin === self.location.origin) {
+          if (response.ok && !response.redirected && url.origin === self.location.origin) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
         })
-        .catch(() => cached || caches.match(OFFLINE_URL));
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))),
+    );
+    return;
+  }
+
+  // Static assets: stale-while-revalidate.
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      const networkFetch = fetch(request)
+        .then((response) => {
+          if (response.ok && !response.redirected && url.origin === self.location.origin) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached);
       return cached ?? networkFetch;
     }),
   );
