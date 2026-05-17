@@ -85,7 +85,7 @@ export async function buildAuthenticationOptions(userId?: string) {
   return generateAuthenticationOptions({
     rpID,
     userVerification: "preferred",
-    allowCredentials,
+    ...(allowCredentials.length > 0 ? { allowCredentials } : {}),
   });
 }
 
