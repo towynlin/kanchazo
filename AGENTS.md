@@ -1,6 +1,6 @@
 # Agent guidelines
 
-## Next.js 15 — one breaking change that matters
+## Next.js (15+) — one breaking change that matters
 
 `params` and `searchParams` in route handlers and page components are **async Promises**, not plain objects. Always `await params` before destructuring:
 
