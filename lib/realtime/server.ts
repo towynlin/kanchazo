@@ -3,7 +3,7 @@ import { Client } from "pg";
 import type { IncomingMessage, Server } from "http";
 import { hashToken } from "@/lib/auth/tokens";
 import { findSessionByTokenHash } from "@/lib/db/queries/sessions";
-import { parse as parseCookie } from "cookie";
+import { parseCookie } from "cookie";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 
 interface TeamSocket {
