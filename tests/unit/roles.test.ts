@@ -22,7 +22,10 @@ describe("parent permissions", () => {
   it("cannot edit any player", () => expect(canEditAnyPlayer("parent")).toBe(false));
   it("cannot create teams", () => expect(canCreateTeam("parent")).toBe(false));
   it("can edit own players", () => expect(canEditOwnPlayers("parent")).toBe(true));
-  it("can invite co-guardian", () => expect(canInviteCoGuardian("parent")).toBe(true));
+  it("can invite co-guardian for own players", () =>
+    expect(canInviteCoGuardian("parent", true)).toBe(true));
+  it("cannot invite co-guardian for other players", () =>
+    expect(canInviteCoGuardian("parent", false)).toBe(false));
 });
 
 describe("coach permissions", () => {
@@ -35,7 +38,10 @@ describe("coach permissions", () => {
   it("can edit any player", () => expect(canEditAnyPlayer("coach")).toBe(true));
   it("can create teams", () => expect(canCreateTeam("coach")).toBe(true));
   it("can edit own players", () => expect(canEditOwnPlayers("coach")).toBe(true));
-  it("can invite co-guardian", () => expect(canInviteCoGuardian("coach")).toBe(true));
+  it("can invite co-guardian for own players", () =>
+    expect(canInviteCoGuardian("coach", true)).toBe(true));
+  it("can invite co-guardian for any player", () =>
+    expect(canInviteCoGuardian("coach", false)).toBe(true));
 });
 
 describe("admin permissions", () => {

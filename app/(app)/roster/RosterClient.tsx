@@ -34,14 +34,12 @@ export default function RosterClient({
   orphanPlayers,
 }: Props) {
   const [showInvite, setShowInvite] = useState(false);
-  const [coGuardianPlayerIds, setCoGuardianPlayerIds] = useState<string[] | null>(null);
+  const [coGuardianTarget, setCoGuardianTarget] = useState<Member | null>(null);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const [recoveryTarget, setRecoveryTarget] = useState<{ userId: string; name: string } | null>(
     null,
   );
   const router = useRouter();
-
-  const myEntry = parents.find((p) => p.userId === currentUserId);
 
   async function handleRemoveMember(userId: string, name: string) {
     if (!confirm(`Remove ${name} from the team? This cannot be undone.`)) return;
@@ -62,6 +60,7 @@ export default function RosterClient({
         <Section
           title={`Coaches (${visibleCoaches.length})`}
           members={visibleCoaches}
+          onAddCoGuardian={setCoGuardianTarget}
           currentUserId={currentUserId}
           isCoach={isCoach}
           onRemove={isCoach ? handleRemoveMember : undefined}
@@ -70,9 +69,7 @@ export default function RosterClient({
         <Section
           title={`Parents & Guardians (${visibleParents.length})`}
           members={visibleParents}
-          onAddCoGuardian={
-            myEntry?.players.length ? (playerIds) => setCoGuardianPlayerIds(playerIds) : undefined
-          }
+          onAddCoGuardian={setCoGuardianTarget}
           currentUserId={currentUserId}
           isCoach={isCoach}
           onRemove={isCoach ? handleRemoveMember : undefined}
@@ -124,12 +121,12 @@ export default function RosterClient({
         />
       )}
 
-      {coGuardianPlayerIds && myEntry && (
+      {coGuardianTarget && (
         <CoGuardianInviteModal
           teamId={teamId}
-          myPlayers={myEntry.players}
-          initialPlayerIds={coGuardianPlayerIds}
-          onDone={() => setCoGuardianPlayerIds(null)}
+          players={coGuardianTarget.players}
+          forSelf={coGuardianTarget.userId === currentUserId}
+          onDone={() => setCoGuardianTarget(null)}
         />
       )}
 
@@ -262,7 +259,7 @@ function Section({
   members: Member[];
   currentUserId?: string;
   isCoach?: boolean;
-  onAddCoGuardian?: (playerIds: string[]) => void;
+  onAddCoGuardian?: (member: Member) => void;
   onRemove?: (userId: string, name: string) => void;
   onRecover?: (userId: string, name: string) => void;
 }) {
@@ -317,7 +314,7 @@ function MemberRow({
   member: Member;
   isCurrentUser?: boolean;
   isCoach?: boolean;
-  onAddCoGuardian?: (playerIds: string[]) => void;
+  onAddCoGuardian?: (member: Member) => void;
   onRemove?: (userId: string, name: string) => void;
   onRecover?: (userId: string, name: string) => void;
 }) {
@@ -395,9 +392,9 @@ function MemberRow({
               {p.name}
             </span>
           ))}
-          {isCurrentUser && onAddCoGuardian && (
+          {(isCurrentUser || isCoach) && onAddCoGuardian && (
             <button
-              onClick={() => onAddCoGuardian(players.map((p) => p.id))}
+              onClick={() => onAddCoGuardian(member)}
               className="font-body font-extrabold text-[10px] text-mk-sky px-2.5 py-1 rounded-full border border-mk-sky min-h-0"
               style={{ minHeight: 0 }}
             >
@@ -499,16 +496,16 @@ function RecoveryLinkModal({
 
 function CoGuardianInviteModal({
   teamId,
-  myPlayers,
-  initialPlayerIds,
+  players,
+  forSelf,
   onDone,
 }: {
   teamId: string;
-  myPlayers: { id: string; name: string }[];
-  initialPlayerIds: string[];
+  players: { id: string; name: string }[];
+  forSelf: boolean;
   onDone: () => void;
 }) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialPlayerIds));
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(players.map((p) => p.id)));
   const [contactEmail, setContactEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -575,7 +572,10 @@ function CoGuardianInviteModal({
                 Invite link ready!
               </p>
               <p className="text-sm text-mk-text-secondary font-body">
-                Send it to your co-guardian however you like. It expires in 7 days.
+                {forSelf
+                  ? "Send it to your co-guardian however you like."
+                  : "Send it to the new guardian however you like."}{" "}
+                It expires in 7 days.
                 {contactEmail.trim() && " We also emailed it for you."}
               </p>
             </div>
@@ -594,7 +594,7 @@ function CoGuardianInviteModal({
                 Share access for
               </label>
               <div className="flex flex-wrap gap-2">
-                {myPlayers.map((p) => (
+                {players.map((p) => (
                   <button
                     key={p.id}
                     type="button"

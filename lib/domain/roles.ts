@@ -38,8 +38,10 @@ export function canEditOwnPlayers(_role: TeamRole): boolean {
   return true; // both parents and coaches
 }
 
-export function canInviteCoGuardian(_role: TeamRole): boolean {
-  return true; // both parents and coaches
+export function canInviteCoGuardian(role: TeamRole, isGuardianOfAllPlayers: boolean): boolean {
+  // Parents may share access to their own players; coaches may add a
+  // co-guardian for any player on their team.
+  return role === "coach" || isGuardianOfAllPlayers;
 }
 
 export function canRemoveMember(actorRole: TeamRole): boolean {
