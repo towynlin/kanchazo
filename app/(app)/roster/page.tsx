@@ -45,6 +45,7 @@ export default async function RosterPage() {
   return (
     <RosterClient
       teamId={team.id}
+      teamName={team.name}
       isCoach={isCoach}
       currentUserId={auth.user.id}
       coaches={coaches}

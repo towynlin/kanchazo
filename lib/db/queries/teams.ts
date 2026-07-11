@@ -15,6 +15,11 @@ export async function createTeam(data: NewTeam): Promise<Team> {
   return results[0];
 }
 
+export async function updateTeam(id: string, data: { name: string }): Promise<Team | null> {
+  const results = await db.update(teams).set(data).where(eq(teams.id, id)).returning();
+  return results[0] ?? null;
+}
+
 export async function getTeamById(id: string): Promise<Team | null> {
   const results = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
   return results[0] ?? null;

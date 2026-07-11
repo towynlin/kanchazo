@@ -16,6 +16,7 @@ interface Member {
 
 interface Props {
   teamId: string;
+  teamName: string;
   isCoach: boolean;
   currentUserId: string;
   coaches: Member[];
@@ -25,6 +26,7 @@ interface Props {
 
 export default function RosterClient({
   teamId,
+  teamName,
   isCoach,
   currentUserId,
   coaches,
@@ -56,6 +58,7 @@ export default function RosterClient({
   return (
     <>
       <div className="pb-4 px-[18px] pt-4">
+        {isCoach && <TeamNameEditor teamId={teamId} teamName={teamName} />}
         <Section
           title={`Coaches (${visibleCoaches.length})`}
           members={visibleCoaches}
@@ -138,6 +141,103 @@ export default function RosterClient({
         />
       )}
     </>
+  );
+}
+
+function TeamNameEditor({ teamId, teamName }: { teamId: string; teamName: string }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(teamName);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleSave(e: MouseEvent) {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Team name can't be empty");
+      return;
+    }
+    if (trimmed === teamName) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/teams/${teamId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error ?? "Failed to rename team");
+        return;
+      }
+      setEditing(false);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-body font-bold text-[11px] text-mk-text-secondary">Team name</div>
+          <div className="font-body font-extrabold text-[14px] text-mk-text truncate">
+            {teamName}
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            setName(teamName);
+            setError(null);
+            setEditing(true);
+          }}
+          className="text-xs text-mk-sky px-2 py-1 font-body font-bold min-h-0 shrink-0"
+          style={{ minHeight: 0 }}
+        >
+          Rename
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-mk-surface rounded-mk-md border-[1.5px] border-mk-border-card px-3.5 py-2.5">
+      <label className="block font-body font-bold text-[11px] text-mk-text-secondary mb-1">
+        Team name
+      </label>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        maxLength={100}
+        autoFocus
+        className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                   focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+      />
+      {error && <p className="mt-1 text-sm text-mk-no-text font-body">{error}</p>}
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2.5 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button
+          onClick={() => setEditing(false)}
+          disabled={saving}
+          className="px-4 py-2.5 text-mk-text-secondary rounded-mk-md text-sm font-body font-bold disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 
