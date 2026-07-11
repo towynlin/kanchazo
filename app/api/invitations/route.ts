@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/api/require-auth";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { createInvitation } from "@/lib/db/queries/invitations";
 import { getTeamMembership } from "@/lib/db/queries/teams";
-import { createPlayer } from "@/lib/db/queries/players";
+import { createPlayer, getTeamPlayers, getPlayersByGuardian } from "@/lib/db/queries/players";
 import { generateToken } from "@/lib/auth/tokens";
 import { getEmailProvider } from "@/lib/email";
 import { canInviteParent, canInviteCoach, canInviteCoGuardian } from "@/lib/domain/roles";
@@ -36,9 +36,17 @@ export async function POST(req: NextRequest) {
       }
       if (data.invitedRole === "parent") {
         const isCoGuardianInvite = !!(data.intendedPlayerIds?.length && !data.playerNames?.length);
-        if (isCoGuardianInvite && !canInviteCoGuardian(membership.role)) {
-          return err("Not allowed", 403);
-        } else if (!isCoGuardianInvite && !canInviteParent(membership.role)) {
+        if (isCoGuardianInvite) {
+          const teamPlayerIds = new Set((await getTeamPlayers(data.teamId)).map((p) => p.id));
+          if (!data.intendedPlayerIds!.every((id) => teamPlayerIds.has(id))) {
+            return err("Unknown player", 400);
+          }
+          const myPlayerIds = new Set((await getPlayersByGuardian(auth.user.id)).map((p) => p.id));
+          const isGuardianOfAll = data.intendedPlayerIds!.every((id) => myPlayerIds.has(id));
+          if (!canInviteCoGuardian(membership.role, isGuardianOfAll)) {
+            return err("You can only invite co-guardians for your own players", 403);
+          }
+        } else if (!canInviteParent(membership.role)) {
           return err("Only coaches can invite new parents", 403);
         }
       }
