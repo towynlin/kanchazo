@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import ShareLink from "@/components/ShareLink";
 
 interface Props {
   teamId: string;
@@ -12,12 +13,11 @@ interface Props {
 export default function InviteForm({ teamId, onInvited, onClose }: Props) {
   const [invitedRole, setInvitedRole] = useState<"parent" | "coach">("parent");
   const [selfGuardian, setSelfGuardian] = useState(false);
-  const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [playerNames, setPlayerNames] = useState<string[]>([""]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   function addPlayer() {
     setPlayerNames((p) => [...p, ""]);
@@ -61,17 +61,17 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
         body: JSON.stringify({
           teamId,
           invitedRole,
-          contactPhone: contactPhone.trim() || null,
           contactEmail: contactEmail.trim() || null,
           playerNames: invitedRole === "parent" ? names : undefined,
         }),
       });
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error ?? "Failed to send invite");
+        setError(d.error ?? "Failed to create invite");
         return;
       }
-      setSent(true);
+      const d = await res.json();
+      setInviteUrl(d.url);
     } finally {
       setSaving(false);
     }
@@ -92,18 +92,22 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
           </button>
         </div>
 
-        {sent ? (
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-3">✉️</div>
-            <p className="font-display font-extrabold text-[16px] text-mk-text mb-1">
-              Invite sent!
-            </p>
-            <p className="text-sm text-mk-text-secondary mb-4 font-body">
-              They&apos;ll receive a link to join the team.
-            </p>
+        {inviteUrl ? (
+          <div className="p-6 pb-8">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-3">🔗</div>
+              <p className="font-display font-extrabold text-[16px] text-mk-text mb-1">
+                Invite link ready!
+              </p>
+              <p className="text-sm text-mk-text-secondary font-body">
+                Send it however you like — text, WhatsApp, email. It expires in 7 days.
+                {contactEmail.trim() && " We also emailed it for you."}
+              </p>
+            </div>
+            <ShareLink url={inviteUrl} shareText="Join our team on Kanchazo!" />
             <button
               onClick={onInvited}
-              className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
+              className="mt-4 w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
             >
               Done
             </button>
@@ -151,36 +155,24 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
               </button>
             )}
 
-            {/* Contact — hidden when coach is adding their own child */}
+            {/* Optional email — hidden when coach is adding their own child */}
             {!(invitedRole === "parent" && selfGuardian) && (
-              <>
-                <div>
-                  <label className="block text-sm font-body font-bold text-mk-text mb-1">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    placeholder="+1 555 000 0000"
-                    className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                               focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-body font-bold text-mk-text mb-1">
-                    Email <span className="text-mk-text-muted font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="coach@example.com"
-                    className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                               focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-                  />
-                </div>
-              </>
+              <div>
+                <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                  Email <span className="text-mk-text-muted font-normal">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="parent@example.com"
+                  className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                             focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+                />
+                <p className="mt-1 text-xs text-mk-text-muted font-body">
+                  You&apos;ll get a link to share either way — add an email to also send it there.
+                </p>
+              </div>
             )}
 
             {/* Player names for parent invites */}
@@ -224,19 +216,14 @@ export default function InviteForm({ teamId, onInvited, onClose }: Props) {
 
             <button
               type="submit"
-              disabled={
-                saving ||
-                (invitedRole === "parent" && selfGuardian
-                  ? !playerNames.some((n) => n.trim())
-                  : !contactPhone.trim() && !contactEmail.trim())
-              }
+              disabled={saving || (invitedRole === "parent" && !playerNames.some((n) => n.trim()))}
               className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
             >
               {saving
                 ? "Saving…"
                 : invitedRole === "parent" && selfGuardian
                   ? "Add to roster"
-                  : "Send invite"}
+                  : "Create invite link"}
             </button>
           </form>
         )}

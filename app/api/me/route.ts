@@ -4,10 +4,12 @@ import { requireAuth } from "@/lib/api/require-auth";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { updateUser, deleteUser } from "@/lib/db/queries/users";
 import { makeClearSessionCookieHeader } from "@/lib/auth/session";
+import { normalizePhone } from "@/lib/domain/phone";
 
 const schema = z.object({
   name: z.string().min(1).max(200).optional(),
   email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
 });
 
 export async function GET() {
@@ -48,7 +50,14 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const data = schema.parse(body);
-    const updated = await updateUser(auth.user.id, data);
+
+    let phone: string | null | undefined = undefined;
+    if (data.phone !== undefined) {
+      phone = data.phone ? normalizePhone(data.phone) : null;
+      if (data.phone && !phone) return err("Invalid phone number", 400);
+    }
+
+    const updated = await updateUser(auth.user.id, { ...data, phone });
     return ok(updated);
   } catch (e) {
     return handleZodError(e);

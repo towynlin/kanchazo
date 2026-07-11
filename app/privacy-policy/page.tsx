@@ -19,8 +19,9 @@ export default function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="font-display font-extrabold text-xl text-mk-text mb-2">Data We Collect</h2>
           <p className="font-body text-mk-text leading-relaxed">
-            We collect your name, phone number, and team activity you enter. We use your phone
-            number only to send SMS messages for account sign-in and team invitations.
+            We collect your name, team activity you enter, and any contact details you choose to
+            share (email, phone number). Contact details are shown only to your teammates on the
+            roster. Sign-in uses passkeys — we never send SMS messages.
           </p>
         </section>
 
@@ -32,14 +33,6 @@ export default function PrivacyPolicy() {
             Your data is used solely to operate the service. Team activity is visible only to
             members of your team. We do not share, sell, or disclose your data to third parties
             without your explicit consent.
-          </p>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="font-display font-extrabold text-xl text-mk-text mb-2">SMS Messages</h2>
-          <p className="font-body text-mk-text leading-relaxed">
-            We send SMS messages only for sign-in (magic links) and team invitations. Message and
-            data rates may apply. Reply STOP to opt out.
           </p>
         </section>
 

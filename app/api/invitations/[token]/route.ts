@@ -2,19 +2,22 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { ok, err, handleZodError } from "@/lib/api/response";
 import { findInvitationByTokenHash, consumeInvitation } from "@/lib/db/queries/invitations";
-import { getTeamById, addTeamMember } from "@/lib/db/queries/teams";
-import { findUserByPhone, createUser } from "@/lib/db/queries/users";
+import { getTeamById, addTeamMember, getTeamMembership } from "@/lib/db/queries/teams";
+import { createUser } from "@/lib/db/queries/users";
 import { addGuardian } from "@/lib/db/queries/players";
-import { createSessionForUser } from "@/lib/auth/magic-link";
-import { makeSessionCookieHeader } from "@/lib/auth/session";
+import {
+  getSessionAndUser,
+  createSessionForUser,
+  makeSessionCookieHeader,
+} from "@/lib/auth/session";
 import { canAcceptInvite } from "@/lib/domain/invites";
 import { hashToken } from "@/lib/auth/tokens";
 import { normalizePhone } from "@/lib/domain/phone";
 
 const acceptSchema = z.object({
-  name: z.string().min(1).optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1).max(200).optional(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -27,12 +30,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     return err("Invitation has expired or already been used", 410);
   }
 
-  const team = invitation.teamId ? await getTeamById(invitation.teamId) : null;
+  const [team, session] = await Promise.all([
+    invitation.teamId ? getTeamById(invitation.teamId) : null,
+    getSessionAndUser(),
+  ]);
   return ok({
     invitedRole: invitation.invitedRole,
     team: team ? { id: team.id, name: team.name } : null,
-    contactPhone: invitation.contactPhone,
     contactEmail: invitation.contactEmail,
+    signedInAs: session ? { name: session.user.name } : null,
   });
 }
 
@@ -50,25 +56,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     const body = await req.json();
     const { name, email, phone: rawPhone } = acceptSchema.parse(body);
 
-    const phone = rawPhone ? normalizePhone(rawPhone) : invitation.contactPhone;
-    if (!phone) return err("Phone number required", 400);
+    const phone = rawPhone ? normalizePhone(rawPhone) : null;
+    if (rawPhone && !phone) return err("Invalid phone number", 400);
 
-    // Find or create the user
-    let user = await findUserByPhone(phone);
+    // Signed-in visitors join with their existing account; otherwise create a new one.
+    // (There is no phone/email dedupe — contact info is unverified and must never
+    // grant access to someone else's account.)
+    const existingSession = await getSessionAndUser();
+    let user = existingSession?.user ?? null;
+    let isNewUser = false;
     if (!user) {
-      if (!name) return err("Name required for new users", 400);
-      user = await createUser({ name, email: email ?? null, phone });
+      if (!name) return err("Name required", 400);
+      user = await createUser({ name, email: email ?? invitation.contactEmail, phone });
+      isNewUser = true;
     }
 
     await consumeInvitation(invitation.id, user.id);
 
     // Add to team
     if (invitation.teamId) {
-      await addTeamMember({
-        teamId: invitation.teamId,
-        userId: user.id,
-        role: invitation.invitedRole,
-      });
+      const alreadyMember = await getTeamMembership(invitation.teamId, user.id);
+      if (!alreadyMember) {
+        await addTeamMember({
+          teamId: invitation.teamId,
+          userId: user.id,
+          role: invitation.invitedRole,
+        });
+      }
 
       // Link to pre-created players for parent invites
       if (invitation.invitedRole === "parent" && invitation.intendedPlayerIds) {
@@ -78,9 +92,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       }
     }
 
-    const { rawSessionToken } = await createSessionForUser(user.id);
-    const response = ok({ userId: user.id, teamId: invitation.teamId });
-    response.headers.set("Set-Cookie", makeSessionCookieHeader(rawSessionToken));
+    const response = ok({ userId: user.id, teamId: invitation.teamId, isNewUser });
+    if (!existingSession) {
+      const { rawSessionToken } = await createSessionForUser(user.id);
+      response.headers.set("Set-Cookie", makeSessionCookieHeader(rawSessionToken));
+    }
     return response;
   } catch (e) {
     return handleZodError(e);

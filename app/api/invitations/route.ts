@@ -2,20 +2,17 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAuth } from "@/lib/api/require-auth";
 import { ok, err, handleZodError } from "@/lib/api/response";
-import { createInvitation, invalidatePreviousInvitations } from "@/lib/db/queries/invitations";
+import { createInvitation } from "@/lib/db/queries/invitations";
 import { getTeamMembership } from "@/lib/db/queries/teams";
 import { createPlayer } from "@/lib/db/queries/players";
 import { generateToken } from "@/lib/auth/tokens";
-import { getSmsProvider } from "@/lib/sms";
 import { getEmailProvider } from "@/lib/email";
 import { canInviteParent, canInviteCoach, canInviteCoGuardian } from "@/lib/domain/roles";
-import { normalizePhone } from "@/lib/domain/phone";
 import { INVITE_EXPIRY_DAYS } from "@/lib/domain/invites";
 
 const schema = z.object({
   teamId: z.string().uuid().optional().nullable(),
   invitedRole: z.enum(["parent", "coach"]),
-  contactPhone: z.string().optional().nullable(),
   contactEmail: z.string().email().optional().nullable(),
   playerNames: z.array(z.string().min(1)).optional(), // coach inviting parent: pre-create players
   intendedPlayerIds: z.array(z.string().uuid()).optional(), // parent sharing co-guardian access
@@ -47,9 +44,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const phone = data.contactPhone ? normalizePhone(data.contactPhone) : null;
-    if (data.contactPhone && !phone) return err("Invalid phone number", 400);
-
     // Pre-create players for coach→parent invites (playerNames provided)
     let intendedPlayerIds: string[] = data.intendedPlayerIds ?? [];
     if (data.invitedRole === "parent" && data.teamId && data.playerNames?.length) {
@@ -59,9 +53,6 @@ export async function POST(req: NextRequest) {
       intendedPlayerIds = created.map((p) => p.id);
     }
 
-    // Invalidate old pending invites for the same contact
-    if (phone) await invalidatePreviousInvitations(phone, undefined, data.teamId ?? undefined);
-
     const { token, hash } = generateToken();
     const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
@@ -69,24 +60,23 @@ export async function POST(req: NextRequest) {
       teamId: data.teamId ?? null,
       inviterUserId: auth.user.id,
       invitedRole: data.invitedRole,
-      contactPhone: phone,
+      contactPhone: null,
       contactEmail: data.contactEmail ?? null,
       intendedPlayerIds: intendedPlayerIds.length ? intendedPlayerIds : null,
       tokenHash: hash,
       expiresAt,
     });
 
-    // Send via SMS or email
+    // The inviter shares the link over any channel (text, WhatsApp, in person);
+    // optionally we also email it for them.
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const inviteUrl = `${appUrl}/invite/${token}`;
 
-    if (phone) {
-      await getSmsProvider().sendInvite(phone, auth.user.name, inviteUrl);
-    } else if (data.contactEmail) {
+    if (data.contactEmail) {
       await getEmailProvider().sendInvite(data.contactEmail, auth.user.name, inviteUrl);
     }
 
-    return ok({ invitationId: invitation.id }, 201);
+    return ok({ invitationId: invitation.id, url: inviteUrl }, 201);
   } catch (e) {
     return handleZodError(e);
   }

@@ -1,11 +1,11 @@
 #!/usr/bin/env tsx
 /**
  * Bootstrap script: create an invitation for the first coach.
- * Usage: DATABASE_URL=... ADMIN_PHONE=+15555550100 tsx scripts/seed-admin.ts <coach-phone>
+ * Usage: DATABASE_URL=... tsx scripts/seed-admin.ts
  *
- * This issues a system-admin invitation (teamId = null) for the given phone number.
- * The recipient taps the SMS link, creates their account, and is prompted to create
- * their first team.
+ * This issues a system-admin invitation (teamId = null) and prints the invite link.
+ * Send the link to the first coach over any channel; they open it, create their
+ * account + passkey, and are prompted to create their first team.
  */
 import "dotenv/config";
 import { Pool } from "pg";
@@ -15,21 +15,7 @@ import * as schema from "../lib/db/schema";
 import { createInvitation } from "../lib/db/queries/invitations";
 import { generateToken } from "../lib/auth/tokens";
 import { INVITE_EXPIRY_DAYS } from "../lib/domain/invites";
-import { LoggerSmsProvider } from "../lib/sms/logger";
 import path from "path";
-
-const coachPhone = process.argv[2];
-if (!coachPhone) {
-  console.error("Usage: tsx scripts/seed-admin.ts <coach-phone>");
-  process.exit(1);
-}
-
-// Basic E.164 check — full carrier validation is not needed for a seed script
-const phone = /^\+[1-9]\d{6,14}$/.test(coachPhone) ? coachPhone : null;
-if (!phone) {
-  console.error("Invalid phone number (expected E.164 like +14155550100):", coachPhone);
-  process.exit(1);
-}
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool, { schema });
@@ -45,7 +31,7 @@ async function main() {
     teamId: null,
     inviterUserId: null,
     invitedRole: "coach",
-    contactPhone: phone,
+    contactPhone: null,
     contactEmail: null,
     intendedPlayerIds: null,
     tokenHash: hash,
@@ -55,13 +41,11 @@ async function main() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const url = `${appUrl}/invite/${token}`;
 
-  const sms = new LoggerSmsProvider();
-  await sms.sendInvite(phone!, "System Admin", url);
-
-  console.log(`\n✅ Invitation created for ${phone}`);
+  console.log(`\n✅ Coach invitation created`);
   console.log(`   ID:      ${invitation.id}`);
   console.log(`   Expires: ${expiresAt.toISOString()}`);
-  console.log(`   Link:    ${url}\n`);
+  console.log(`   Link:    ${url}`);
+  console.log(`\n   Send this link to the coach over any channel.\n`);
 
   await pool.end();
 }

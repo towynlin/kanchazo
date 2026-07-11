@@ -1,4 +1,4 @@
-.PHONY: dev migrate test test-unit test-integration test-e2e lint build clean seed-admin
+.PHONY: dev migrate test test-unit test-integration test-e2e lint build clean seed-admin recovery-link
 
 dev:
 	@cp -n .env.example .env 2>/dev/null || true
@@ -34,8 +34,11 @@ build:
 	npm run build
 
 seed-admin:
-	@if [ -z "$(PHONE)" ]; then echo "Usage: make seed-admin PHONE=+14155550100"; exit 1; fi
-	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo npx tsx scripts/seed-admin.ts $(PHONE)
+	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo npx tsx scripts/seed-admin.ts
+
+recovery-link:
+	@if [ -z "$(USER_ID)" ]; then echo "Usage: make recovery-link USER_ID=<user-id-or-email>"; exit 1; fi
+	DATABASE_URL=postgres://kanchazo:kanchazo@localhost:5432/kanchazo npx tsx scripts/recovery-link.ts $(USER_ID)
 
 clean:
 	docker compose down -v

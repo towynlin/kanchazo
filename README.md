@@ -4,7 +4,7 @@ Kanchazo is a Spanish-rooted word — _cancha_ is what Latino families call the 
 
 A mobile-first, invite-only PWA for managing youth sports teams. Coaches create the team, invite parents, and everyone sees the same schedule, sets availability, and chats in one place. No accounts to create, no payments, no noise.
 
-**Features:** SMS magic-link auth · Passkeys · Schedule with inline availability · Group chat with live updates · Roster management · iCal feed · Web Push notifications · Invite-only signup
+**Features:** Passkey auth (no passwords, no SMS) · Recovery codes + coach-issued sign-in links · Schedule with inline availability · Group chat with live updates · Roster management · iCal feed · Web Push notifications · Invite-only signup
 
 ---
 
@@ -29,7 +29,7 @@ Copy the example env file and edit as needed:
 cp .env.example .env
 ```
 
-The defaults work out of the box for local development — SMS and email are logged to the console instead of sent, so you never need Twilio or Resend credentials to develop.
+The defaults work out of the box for local development — invite emails are logged to the console instead of sent, so you never need Resend credentials to develop.
 
 ### Start
 
@@ -44,10 +44,10 @@ That command starts Postgres in Docker, runs all migrations, and starts the Next
 The app is invite-only, so you need to create an invitation to get your first user in:
 
 ```bash
-make seed-admin PHONE=+14155550100
+make seed-admin
 ```
 
-The invite link is printed to the console. Open it to complete signup, create your first team, and start inviting parents.
+The invite link is printed to the console. Open it to create your account and passkey, create your first team, and start inviting parents.
 
 ### Other make targets
 
@@ -87,10 +87,6 @@ Set these in your hosting environment. Never commit `.env`.
 | `WEBAUTHN_RP_ID`      | ✅        | Domain only, e.g. `kanchazo.fly.dev`                             |
 | `WEBAUTHN_ORIGIN`     | ✅        | Full origin, e.g. `https://kanchazo.fly.dev`                     |
 | `WEBAUTHN_RP_NAME`    | ✅        | Display name shown in passkey prompts                            |
-| `SMS_PROVIDER`        | ✅        | `twilio` in production, `logger` in dev                          |
-| `TWILIO_ACCOUNT_SID`  | if Twilio | From the Twilio console                                          |
-| `TWILIO_AUTH_TOKEN`   | if Twilio | From the Twilio console                                          |
-| `TWILIO_FROM_NUMBER`  | if Twilio | E.164 number, e.g. `+15005550006`                                |
 | `EMAIL_PROVIDER`      | ✅        | `resend` in production, `logger` in dev                          |
 | `RESEND_API_KEY`      | if Resend | From the Resend dashboard                                        |
 | `VAPID_PUBLIC_KEY`    | optional  | Web Push public key (for push notifications)                     |
@@ -136,10 +132,6 @@ fly secrets set \
   WEBAUTHN_RP_ID="your-app-name.fly.dev" \
   WEBAUTHN_ORIGIN="https://your-app-name.fly.dev" \
   NEXT_PUBLIC_APP_URL="https://your-app-name.fly.dev" \
-  SMS_PROVIDER=twilio \
-  TWILIO_ACCOUNT_SID=ACxxxxxxx \
-  TWILIO_AUTH_TOKEN=xxxxxxx \
-  TWILIO_FROM_NUMBER=+15005550006 \
   EMAIL_PROVIDER=resend \
   RESEND_API_KEY=re_xxxxxxx
 ```
@@ -155,10 +147,16 @@ Migrations run automatically on each deploy before the server starts.
 **5. Seed the first coach:**
 
 ```bash
-fly ssh console -C "npx tsx scripts/seed-admin.ts +14155550100"
+fly ssh console -C "npx tsx scripts/seed-admin.ts"
 ```
 
-The invite link is printed to the console. Or set `NEXT_PUBLIC_APP_URL` before running so the link points to your live domain.
+The invite link is printed to the console. Send it to the first coach over any channel.
+
+**If someone is locked out** (lost passkey and recovery codes, and no coach can help), a sysadmin can mint a one-time sign-in link:
+
+```bash
+fly ssh console -C "npx tsx scripts/recovery-link.ts <user-id-or-email>"
+```
 
 ### Other providers
 
@@ -172,7 +170,7 @@ For **Vercel or other serverless platforms**: the embedded WebSocket server (`se
 
 ## Architecture notes
 
-- **Auth:** SMS magic links (no password). Passkeys offered after first login.
+- **Auth:** Passkeys only — no passwords, no SMS. New users get a passkey plus single-use recovery codes at signup. If both are lost, a coach (or a sysadmin via CLI) issues a one-time sign-in link shared over any side channel.
 - **Real-time chat:** WebSocket server embedded in the Next.js process, backed by Postgres `LISTEN/NOTIFY` for fan-out across multiple instances.
 - **Database:** PostgreSQL with [Drizzle ORM](https://orm.drizzle.team). Migrations live in `db/migrations/` and are applied automatically on boot.
 - **Push notifications:** Web Push API with VAPID. iOS requires the app to be added to the Home Screen (PWA mode) for push to work.
@@ -206,15 +204,14 @@ make migrate
 app/             Next.js App Router pages and API routes
 components/      Shared UI components
 lib/
-  auth/          Sessions, magic links, passkeys
+  auth/          Sessions, passkeys, recovery codes & links
   db/            Drizzle schema and query functions
   domain/        Pure business logic (roles, availability, invites)
-  sms/           SMS provider interface + Twilio + logger
   email/         Email provider interface + Resend + logger
   push/          Web Push sender
   realtime/      WebSocket server and Postgres LISTEN/NOTIFY
 db/migrations/   SQL migration files (checked in)
-scripts/         CLI tools (seed-admin)
+scripts/         CLI tools (seed-admin, recovery-link)
 tests/
   unit/          Vitest unit tests
   integration/   Vitest integration tests (real Postgres)

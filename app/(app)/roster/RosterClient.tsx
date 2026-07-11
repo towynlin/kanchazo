@@ -5,11 +5,12 @@ import type { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import InviteForm from "@/components/InviteForm";
 import Avatar from "@/components/Avatar";
+import ShareLink from "@/components/ShareLink";
 
 interface Member {
   userId: string;
   role: "parent" | "coach";
-  user: { name: string; email: string | null; phone: string };
+  user: { name: string; email: string | null; phone: string | null };
   players: { id: string; name: string }[];
 }
 
@@ -33,6 +34,9 @@ export default function RosterClient({
   const [showInvite, setShowInvite] = useState(false);
   const [coGuardianPlayerIds, setCoGuardianPlayerIds] = useState<string[] | null>(null);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const [recoveryTarget, setRecoveryTarget] = useState<{ userId: string; name: string } | null>(
+    null,
+  );
   const router = useRouter();
 
   const myEntry = parents.find((p) => p.userId === currentUserId);
@@ -58,6 +62,7 @@ export default function RosterClient({
           currentUserId={currentUserId}
           isCoach={isCoach}
           onRemove={isCoach ? handleRemoveMember : undefined}
+          onRecover={isCoach ? (userId, name) => setRecoveryTarget({ userId, name }) : undefined}
         />
         <Section
           title={`Parents & Guardians (${visibleParents.length})`}
@@ -68,6 +73,7 @@ export default function RosterClient({
           currentUserId={currentUserId}
           isCoach={isCoach}
           onRemove={isCoach ? handleRemoveMember : undefined}
+          onRecover={isCoach ? (userId, name) => setRecoveryTarget({ userId, name }) : undefined}
         />
         {isCoach && orphanPlayers.length > 0 && (
           <>
@@ -123,6 +129,14 @@ export default function RosterClient({
           onDone={() => setCoGuardianPlayerIds(null)}
         />
       )}
+
+      {recoveryTarget && (
+        <RecoveryLinkModal
+          teamId={teamId}
+          target={recoveryTarget}
+          onDone={() => setRecoveryTarget(null)}
+        />
+      )}
     </>
   );
 }
@@ -142,6 +156,7 @@ function Section({
   isCoach,
   onAddCoGuardian,
   onRemove,
+  onRecover,
 }: {
   title: string;
   members: Member[];
@@ -149,6 +164,7 @@ function Section({
   isCoach?: boolean;
   onAddCoGuardian?: (playerIds: string[]) => void;
   onRemove?: (userId: string, name: string) => void;
+  onRecover?: (userId: string, name: string) => void;
 }) {
   return (
     <>
@@ -162,6 +178,7 @@ function Section({
             isCoach={isCoach}
             onAddCoGuardian={onAddCoGuardian}
             onRemove={m.userId !== currentUserId ? onRemove : undefined}
+            onRecover={m.userId !== currentUserId ? onRecover : undefined}
           />
         ))}
       </div>
@@ -195,12 +212,14 @@ function MemberRow({
   isCoach,
   onAddCoGuardian,
   onRemove,
+  onRecover,
 }: {
   member: Member;
   isCurrentUser?: boolean;
   isCoach?: boolean;
   onAddCoGuardian?: (playerIds: string[]) => void;
   onRemove?: (userId: string, name: string) => void;
+  onRecover?: (userId: string, name: string) => void;
 }) {
   const { user, players } = member;
   const variant = member.role === "coach" ? "coach" : "player";
@@ -221,14 +240,27 @@ function MemberRow({
             {member.role === "coach" ? "Coach" : "Parent / Guardian"}
           </div>
         </div>
-        {isCoach && onRemove && !isCurrentUser && (
-          <button
-            onClick={() => onRemove(member.userId, user.name)}
-            className="text-xs text-mk-no-text px-2 py-1 font-body font-bold min-h-0"
-            style={{ minHeight: 0 }}
-          >
-            Remove
-          </button>
+        {isCoach && !isCurrentUser && (
+          <div className="flex items-center gap-1">
+            {onRecover && (
+              <button
+                onClick={() => onRecover(member.userId, user.name)}
+                className="text-xs text-mk-sky px-2 py-1 font-body font-bold min-h-0"
+                style={{ minHeight: 0 }}
+              >
+                Help sign in
+              </button>
+            )}
+            {onRemove && (
+              <button
+                onClick={() => onRemove(member.userId, user.name)}
+                className="text-xs text-mk-no-text px-2 py-1 font-body font-bold min-h-0"
+                style={{ minHeight: 0 }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
         )}
       </div>
       {user.email && (
@@ -242,15 +274,17 @@ function MemberRow({
           <CopyButton value={user.email} />
         </div>
       )}
-      <div className="flex items-center gap-1 mt-0.5">
-        <a
-          href={`tel:${user.phone}`}
-          className="text-sm text-mk-sky flex-1 font-body font-semibold"
-        >
-          {user.phone}
-        </a>
-        <CopyButton value={user.phone} />
-      </div>
+      {user.phone && (
+        <div className="flex items-center gap-1 mt-0.5">
+          <a
+            href={`tel:${user.phone}`}
+            className="text-sm text-mk-sky flex-1 font-body font-semibold"
+          >
+            {user.phone}
+          </a>
+          <CopyButton value={user.phone} />
+        </div>
+      )}
       {players.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2.5">
           {players.map((p) => (
@@ -276,6 +310,93 @@ function MemberRow({
   );
 }
 
+function RecoveryLinkModal({
+  teamId,
+  target,
+  onDone,
+}: {
+  teamId: string;
+  target: { userId: string; name: string };
+  onDone: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCreate() {
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/members/${target.userId}/recovery-link`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error ?? "Failed to create link");
+        return;
+      }
+      const d = await res.json();
+      setUrl(d.url);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-20" onClick={onDone} />
+      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-mk-bg rounded-t-[40px] z-30 max-h-[90vh] overflow-y-auto">
+        <div className="p-4 border-b border-mk-border-card flex items-center justify-between">
+          <h2 className="font-display font-extrabold text-[18px] text-mk-text">
+            Help {target.name} sign in
+          </h2>
+          <button
+            onClick={onDone}
+            className="text-mk-text-secondary text-xl leading-none min-h-0"
+            style={{ minHeight: "auto" }}
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-4 space-y-4 pb-8">
+          {url ? (
+            <>
+              <p className="text-sm text-mk-text-secondary font-body">
+                Send this link to {target.name} directly — text, WhatsApp, however you normally
+                reach them. It signs them straight into their account, works once, and expires in 24
+                hours.
+              </p>
+              <ShareLink url={url} shareText="Here's your Kanchazo sign-in link:" />
+              <button
+                onClick={onDone}
+                className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
+              >
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-mk-text-secondary font-body">
+                If {target.name} lost their passkey and recovery codes, you can create a one-time
+                sign-in link and send it to them yourself. Only do this for a request you know is
+                really from them.
+              </p>
+              {error && <p className="text-mk-no-text text-sm font-body">{error}</p>}
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold disabled:opacity-50"
+              >
+                {creating ? "Creating…" : "Create sign-in link"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function CoGuardianInviteModal({
   teamId,
   myPlayers,
@@ -288,11 +409,10 @@ function CoGuardianInviteModal({
   onDone: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialPlayerIds));
-  const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   function togglePlayer(id: string) {
     setSelectedIds((s) => {
@@ -317,17 +437,17 @@ function CoGuardianInviteModal({
         body: JSON.stringify({
           teamId,
           invitedRole: "parent",
-          contactPhone: contactPhone.trim() || null,
           contactEmail: contactEmail.trim() || null,
           intendedPlayerIds: [...selectedIds],
         }),
       });
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error ?? "Failed to send invite");
+        setError(d.error ?? "Failed to create invite");
         return;
       }
-      setSent(true);
+      const d = await res.json();
+      setInviteUrl(d.url);
     } finally {
       setSaving(false);
     }
@@ -347,12 +467,19 @@ function CoGuardianInviteModal({
             ✕
           </button>
         </div>
-        {sent ? (
-          <div className="p-6 text-center">
-            <div className="text-4xl mb-3">✉️</div>
-            <p className="font-display font-extrabold text-[16px] text-mk-text mb-1">
-              Invite sent!
-            </p>
+        {inviteUrl ? (
+          <div className="p-6 pb-8">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-3">🔗</div>
+              <p className="font-display font-extrabold text-[16px] text-mk-text mb-1">
+                Invite link ready!
+              </p>
+              <p className="text-sm text-mk-text-secondary font-body">
+                Send it to your co-guardian however you like. It expires in 7 days.
+                {contactEmail.trim() && " We also emailed it for you."}
+              </p>
+            </div>
+            <ShareLink url={inviteUrl} shareText="Join our team on Kanchazo!" />
             <button
               onClick={onDone}
               className="mt-4 w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold"
@@ -385,20 +512,7 @@ function CoGuardianInviteModal({
             </div>
             <div>
               <label className="block text-sm font-body font-bold text-mk-text mb-1">
-                Their phone
-              </label>
-              <input
-                type="tel"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 555 000 0000"
-                className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base focus:outline-none focus:ring-2 focus:ring-mk-sky bg-mk-bg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-body font-bold text-mk-text mb-1">
-                Or their email{" "}
-                <span className="text-mk-text-secondary font-normal">(optional)</span>
+                Their email <span className="text-mk-text-secondary font-normal">(optional)</span>
               </label>
               <input
                 type="email"
@@ -407,16 +521,17 @@ function CoGuardianInviteModal({
                 placeholder="guardian@example.com"
                 className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base focus:outline-none focus:ring-2 focus:ring-mk-sky bg-mk-bg"
               />
+              <p className="mt-1 text-xs text-mk-text-muted font-body">
+                You&apos;ll get a link to share either way — add an email to also send it there.
+              </p>
             </div>
             {error && <p className="text-mk-no-text text-sm">{error}</p>}
             <button
               onClick={handleSubmit}
-              disabled={
-                saving || selectedIds.size === 0 || (!contactPhone.trim() && !contactEmail.trim())
-              }
+              disabled={saving || selectedIds.size === 0}
               className="w-full py-3 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base disabled:opacity-50"
             >
-              {saving ? "Sending…" : "Send invite"}
+              {saving ? "Creating…" : "Create invite link"}
             </button>
           </div>
         )}

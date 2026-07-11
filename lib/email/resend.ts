@@ -28,15 +28,6 @@ export class ResendEmailProvider implements EmailProvider {
     }
   }
 
-  async sendMagicLink(email: string, url: string): Promise<void> {
-    await this.send(
-      email,
-      "Your Kanchazo sign-in link",
-      `<p>Click to sign in to Kanchazo (expires in 5 minutes):</p>
-       <p><a href="${url}">${url}</a></p>`,
-    );
-  }
-
   async sendInvite(email: string, inviterName: string, url: string): Promise<void> {
     await this.send(
       email,

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { hashToken } from "./tokens";
-import { findSessionByTokenHash, touchSession } from "@/lib/db/queries/sessions";
+import { generateToken, hashToken } from "./tokens";
+import { createSession, findSessionByTokenHash, touchSession } from "@/lib/db/queries/sessions";
 import { findUserById } from "@/lib/db/queries/users";
 import type { Session, User } from "@/lib/db/schema";
 
@@ -24,6 +24,15 @@ export async function getSessionAndUser(): Promise<{ session: Session; user: Use
   touchSession(session.id, newExpiresAt).catch(() => {});
 
   return { session, user };
+}
+
+export async function createSessionForUser(
+  userId: string,
+): Promise<{ rawSessionToken: string; session: Session }> {
+  const { token, hash } = generateToken();
+  const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MS);
+  const session = await createSession({ userId, tokenHash: hash, expiresAt });
+  return { rawSessionToken: token, session };
 }
 
 export function makeSessionCookieHeader(rawToken: string): string {

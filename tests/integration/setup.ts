@@ -23,7 +23,8 @@ afterEach(async () => {
       invitations,
       team_memberships,
       teams,
-      magic_tokens,
+      recovery_codes,
+      recovery_links,
       sessions,
       passkeys,
       users

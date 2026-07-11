@@ -26,14 +26,6 @@ export default function TermsAndConditions() {
         </section>
 
         <section className="mb-8">
-          <h2 className="font-display font-extrabold text-xl text-mk-text mb-2">SMS Messaging</h2>
-          <p className="font-body text-mk-text leading-relaxed">
-            By providing your phone number you consent to receive SMS messages for sign-in and team
-            invitations. Message and data rates may apply. Reply STOP to opt out.
-          </p>
-        </section>
-
-        <section className="mb-8">
           <h2 className="font-display font-extrabold text-xl text-mk-text mb-2">No Warranties</h2>
           <p className="font-body text-mk-text leading-relaxed">
             Kanchazo is provided as-is without warranties of any kind. We may modify or discontinue

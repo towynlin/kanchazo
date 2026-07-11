@@ -6,14 +6,14 @@
 
 - Mobile-first web app (PWA). Usage is almost entirely on iPhone/Android browsers.
 - Invite-only. No self-service registration. No money.
-- Auth via SMS magic link; passkeys offered after first login.
+- Auth via passkeys only — no passwords, no SMS. Recovery codes and coach-issued sign-in links as fallbacks.
 - Three primary screens per team: **Schedule**, **Roster**, **Chat**. Plus a persistent team selector.
 - Open source on GitHub. Easy to deploy. CI + red-green TDD throughout.
 - Future-proof toward native iOS/Android apps, but ship a great PWA first.
 
 ## 2. Glossary
 
-- **User** — a real adult: parent, guardian, or coach. Has name, email, phone.
+- **User** — a real adult: parent, guardian, or coach. Has name and optional email/phone contact info.
 - **Player** — a child on a team. Has only a name; no contact info is collected for children.
 - **Team** — a named group of users, players, coaches, and events.
 - **Event** — a game or practice belonging to one team. Has date, time, location.
@@ -69,27 +69,23 @@ Session                 id, user_id, token_hash, created_at, expires_at, last_se
 
 Constraints:
 
-- Phone numbers are stored normalized E.164; uniqueness on `User.phone`.
+- Phone numbers, when provided, are stored normalized E.164. They are optional, unverified contact info for the roster — never an identity credential.
 - A `Player` always belongs to exactly one `Team` and has at least one `PlayerGuardian`.
 - Deleting a team hard-deletes all its events, players, memberships, chat. Document this; require typed confirmation.
 
 ## 5. Authentication
 
-### 5.1 SMS magic link
+### 5.1 Passkeys (the only sign-in method)
 
-1. User enters phone number. UI shows country code picker; default to US.
-2. Server normalizes to E.164, looks up the user. If no user exists with that phone, only proceed if a valid unused `Invitation` matches.
-3. Server rate-limits per phone (≤1 send / 30s, ≤5 / hour) and per IP.
-4. Server generates a 32-byte random token, stores `sha256(token)` plus `expires_at = now + 5 minutes`, and sends an SMS containing the link `https://<host>/auth/verify?t=<token>`.
-5. Tapping the link logs the user in and consumes the token (single use).
-6. Session set as HTTP-only, Secure, SameSite=Lax cookie. Default 30-day rolling expiry.
+- No passwords, no SMS, no OTPs. Use WebAuthn via `@simplewebauthn/server` + `@simplewebauthn/browser`.
+- New users register their first passkey immediately after accepting an invite (`/auth/setup`).
+- A user may register multiple passkeys (one per device); manage them from Settings.
+- The sign-in screen is a single "Sign in with passkey" CTA.
 
-### 5.2 Passkeys
+### 5.2 Account recovery
 
-- Offered immediately after first successful SMS login, and from a Settings screen.
-- Use WebAuthn via `@simplewebauthn/server` + `@simplewebauthn/browser`.
-- A user may register multiple passkeys (one per device).
-- On subsequent visits, passkey is the primary CTA; "Send me a code" is the fallback.
+- **Recovery codes.** Eight single-use codes issued at signup (and regenerable from Settings; regeneration invalidates previous codes). Stored as `sha256(normalized code)`. Redeemed at `/auth/recover`, which signs the user in and prompts them to register a fresh passkey. Redemption attempts are rate-limited.
+- **Recovery links.** For members who lose passkey _and_ codes: any coach on their team can generate a single-use, 24-hour sign-in link from the roster ("Help sign in") and share it over a side channel they trust (text, WhatsApp, in person). Works for parents and fellow coaches alike. A sysadmin can mint the same link from the CLI (`scripts/recovery-link.ts`). The landing page requires an explicit tap to consume the link so messenger link previews can't burn it.
 
 ### 5.3 Sessions
 
@@ -160,11 +156,11 @@ A vertical, scrollable list of events for the current team.
 
 ### 6.6 Settings
 
-- Edit own name, email.
+- Edit own name, email, phone (plain contact info shown on the roster; no verification).
 - Manage passkeys (list, add, remove).
+- Generate new recovery codes (shown once; replaces previous codes).
 - Sign out / sign out everywhere.
 - Notification preferences (see §8).
-- Phone number change: requires SMS verification of the new number, then atomic swap; old sessions remain valid.
 
 ## 7. Invitations & onboarding
 
@@ -172,8 +168,10 @@ A vertical, scrollable list of events for the current team.
 
 - **System admin → coach (new team owner).** CLI in v1; creates an `Invitation` with `team_id = null`, `invited_role = coach`. On accept, the new coach is prompted to create their first team.
 - **Coach → coach (same team).** In-app form on the team's roster page.
-- **Coach → parent (their team).** In-app form on the team's roster page. Fields: parent's name, phone or email, and one or more **player names** to associate. Player rows are created on invite send so the roster reflects them immediately; if the invite expires unused, the orphan players remain visible to the coach with a "pending guardian" badge and a resend action.
-- **Parent → parent (co-guardian for own player).** From a player's profile, "Add another guardian": choose the player(s) to share, enter the new guardian's contact, send.
+- **Coach → parent (their team).** In-app form on the team's roster page. Fields: one or more **player names** to associate, plus an optional email. Player rows are created on invite send so the roster reflects them immediately; if the invite expires unused, the orphan players remain visible to the coach with a "pending guardian" badge and a resend action.
+- **Parent → parent (co-guardian for own player).** From a player's profile, "Add another guardian": choose the player(s) to share, get a link to send.
+
+Every invite produces a **shareable link** shown to the inviter with copy/share actions — the inviter delivers it over whatever channel they already use with that person. Adding an email additionally sends the link by email.
 
 ### 7.2 Invitation tokens
 
@@ -183,9 +181,9 @@ A vertical, scrollable list of events for the current team.
 
 ### 7.3 First-time signup from invite
 
-1. User taps SMS link → enters phone (pre-filled if provided in invite) → SMS verification.
-2. If a `User` already exists with this phone, the membership is added to that account.
-3. Otherwise, account is created. Prompt for name and email. Add team membership and link to any pre-created players.
+1. User opens the invite link. If already signed in, the membership is added to that account.
+2. Otherwise, they enter their name (plus optional phone for the roster) and the account is created. Add team membership and link to any pre-created players.
+3. They land on `/auth/setup`: register a passkey, then save their recovery codes.
 4. Land on Schedule for that team.
 
 ## 8. Notifications (recommended additions — see §13)
@@ -207,8 +205,7 @@ I'm picking concrete choices so Claude Code has clear marching orders. Override 
 - **ORM**: Drizzle (SQL-first, light) — preferred. Prisma is acceptable.
 - **Real-time** (chat live updates):
   - Server-side WebSocket route in Next.js (Node runtime), backed by Postgres `LISTEN/NOTIFY`. Lowest dependency cost; works fine on Fly.io.
-- **SMS**: Twilio Programmable Messaging. Wrap behind an `SmsProvider` interface; ship a `LoggerSmsProvider` for local dev that prints the link to the console (no Twilio account needed to develop).
-- **Email** (some invites): Resend or Postmark. Same provider abstraction pattern as SMS.
+- **Email** (some invites): Resend or Postmark, behind an `EmailProvider` interface; ship a `LoggerEmailProvider` for local dev that prints links to the console (no credentials needed to develop).
 - **Passkeys**: `@simplewebauthn/server` + `@simplewebauthn/browser`.
 - **Validation**: Zod on every server boundary.
 - **Logging**: pino, structured JSON to stdout.
@@ -223,8 +220,8 @@ A PWA covers the brief: schedule, roster, availability taps, chat, push (iOS 16.
 
 - All traffic over HTTPS. HSTS, sensible CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
 - Phone numbers are PII; store normalized E.164. Never log message bodies.
-- All authentication tokens (sessions, magic links, invites) stored as `sha256(token)`; raw token only ever in transit.
-- Rate limiting on: SMS send, login attempts, invite generation, chat send.
+- All authentication tokens (sessions, recovery codes, recovery links, invites) stored as `sha256(token)`; raw token only ever in transit.
+- Rate limiting on: recovery code/link redemption, login attempts, invite generation, chat send.
 - **Children's data minimization**: store only player name. No DOB, no contact info, no photos in v1. Document this in the privacy policy. (Mitigates COPPA exposure.)
 - Audit log for coach actions: event create/edit/delete, notes edit, member removal.
 - Secrets only via environment variables; provide `.env.example`. Never commit `.env`.
@@ -234,7 +231,7 @@ A PWA covers the brief: schedule, roster, availability taps, chat, push (iOS 16.
 ## 11. Deployment & ops
 
 - Single multi-stage `Dockerfile` building the Next.js app.
-- `compose.yml` for local development: app + Postgres + a logger SMS sink (no Twilio needed).
+- `compose.yml` for local development: app + Postgres (no external credentials needed).
 - One-command bootstrap: `make dev` runs migrations, seeds an admin, starts the server.
 - Migrations checked in. `npm run migrate` applied automatically on container boot.
 - `/healthz` endpoint returning DB connectivity status.
@@ -252,7 +249,7 @@ A PWA covers the brief: schedule, roster, availability taps, chat, push (iOS 16.
   3. E2E (Playwright)
   4. build
 - Pre-commit: lint-staged + prettier + tsc.
-- Never call Twilio in tests — assert on the in-memory provider's outbox.
+- Never call external providers in tests — assert on the in-memory logger provider's outbox.
 
 ## 13. Recommended additions beyond the brief
 
@@ -290,9 +287,8 @@ Sorted by ROI. All optional; flag if any should drop.
 /app                 Next.js App Router (pages, API routes, layouts)
 /components          shared UI
 /lib
-  /auth              sessions, magic links, passkeys
+  /auth              sessions, passkeys, recovery codes & links
   /db                Drizzle schema + queries
-  /sms               provider interface + Twilio + logger impls
   /email             provider interface + Resend impl
   /realtime          WS server + client
   /domain            pure logic (role checks, availability, invites)

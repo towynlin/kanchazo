@@ -5,7 +5,7 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  user: { id: string; name: string; email: string | null; phone: string };
+  user: { id: string; name: string; email: string | null; phone: string | null };
   passkeys: Array<{
     id: string;
     deviceName: string | null;
@@ -20,17 +20,16 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
   const router = useRouter();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email ?? "");
+  const [phone, setPhone] = useState(user.phone ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [addingPasskey, setAddingPasskey] = useState(false);
   const [icalUrl, setIcalUrl] = useState<string | null>(null);
   const [loadingIcal, setLoadingIcal] = useState(false);
-  const [changingPhone, setChangingPhone] = useState(false);
-  const [newPhone, setNewPhone] = useState("");
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [phoneStep, setPhoneStep] = useState<"enter" | "verify">("enter");
-  const [phoneSending, setPhoneSending] = useState(false);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [codesLoading, setCodesLoading] = useState(false);
+  const [codesCopied, setCodesCopied] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
@@ -48,12 +47,18 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
   async function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
     try {
-      await fetch("/api/me", {
+      const res = await fetch("/api/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email: email || null }),
+        body: JSON.stringify({ name, email: email || null, phone: phone || null }),
       });
+      if (!res.ok) {
+        const d = await res.json();
+        setSaveError(d.error ?? "Failed to save");
+        return;
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -83,48 +88,30 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
     }
   }
 
-  async function handleSendPhoneOtp() {
-    setPhoneSending(true);
-    setPhoneError(null);
+  async function handleGenerateRecoveryCodes() {
+    if (
+      recoveryCodes === null &&
+      !confirm("Generate new recovery codes? Any codes you saved before will stop working.")
+    ) {
+      return;
+    }
+    setCodesLoading(true);
     try {
-      const res = await fetch("/api/auth/change-phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: newPhone }),
-      });
-      if (!res.ok) {
+      const res = await fetch("/api/auth/recovery-codes", { method: "POST" });
+      if (res.ok) {
         const d = await res.json();
-        setPhoneError(d.error ?? "Failed to send code");
-        return;
+        setRecoveryCodes(d.codes);
       }
-      setPhoneStep("verify");
     } finally {
-      setPhoneSending(false);
+      setCodesLoading(false);
     }
   }
 
-  async function handleVerifyPhone() {
-    setPhoneSending(true);
-    setPhoneError(null);
-    try {
-      const res = await fetch("/api/auth/change-phone", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: newPhone, token: phoneOtp }),
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        setPhoneError(d.error ?? "Invalid or expired code");
-        return;
-      }
-      setChangingPhone(false);
-      setPhoneStep("enter");
-      setNewPhone("");
-      setPhoneOtp("");
-      router.refresh();
-    } finally {
-      setPhoneSending(false);
-    }
+  async function handleCopyRecoveryCodes() {
+    if (!recoveryCodes) return;
+    await navigator.clipboard.writeText(recoveryCodes.join("\n"));
+    setCodesCopied(true);
+    setTimeout(() => setCodesCopied(false), 1500);
   }
 
   async function handleTogglePush() {
@@ -244,92 +231,21 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
           </div>
           <div>
             <label className="block text-sm font-body font-bold text-mk-text mb-1">Phone</label>
-            {changingPhone ? (
-              <div className="space-y-2">
-                {phoneStep === "enter" ? (
-                  <>
-                    <input
-                      type="tel"
-                      placeholder="+1 415 555 0100"
-                      value={newPhone}
-                      onChange={(e) => setNewPhone(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-                    />
-                    {phoneError && (
-                      <p className="text-xs text-mk-no-text font-body">{phoneError}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleSendPhoneOtp}
-                        disabled={phoneSending || !newPhone}
-                        className="px-4 py-2 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
-                      >
-                        {phoneSending ? "Sending…" : "Send code"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChangingPhone(false);
-                          setPhoneError(null);
-                          setNewPhone("");
-                        }}
-                        className="px-4 py-2 text-mk-text-secondary text-sm font-body font-bold"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs text-mk-text-secondary font-body">
-                      Enter the sign-in link token sent to {newPhone}
-                    </p>
-                    <input
-                      type="text"
-                      placeholder="Paste token from the link"
-                      value={phoneOtp}
-                      onChange={(e) => setPhoneOtp(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-                    />
-                    {phoneError && (
-                      <p className="text-xs text-mk-no-text font-body">{phoneError}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleVerifyPhone}
-                        disabled={phoneSending || !phoneOtp}
-                        className="px-4 py-2 bg-mk-sky text-white rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
-                      >
-                        {phoneSending ? "Verifying…" : "Confirm"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPhoneStep("enter")}
-                        className="px-4 py-2 text-mk-text-secondary text-sm font-body font-bold"
-                      >
-                        Back
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2.5 bg-mk-surface rounded-mk-md text-base text-mk-text-secondary font-body border border-mk-border-card">
-                  {user.phone}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setChangingPhone(true)}
-                  className="text-sm text-mk-sky whitespace-nowrap font-body font-extrabold"
-                >
-                  Change
-                </button>
-              </div>
-            )}
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+1 415 555 0100"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2.5 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+            />
+            <p className="mt-1 text-xs text-mk-text-muted font-body">
+              Shown on the team roster so other families can reach you.
+            </p>
           </div>
+          {saveError && <p className="text-sm text-mk-no-text font-body">{saveError}</p>}
           <button
             type="submit"
             disabled={saving}
@@ -381,6 +297,48 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
           className="px-4 py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
         >
           {addingPasskey ? "Setting up…" : "+ Add passkey for this device"}
+        </button>
+      </section>
+
+      {/* Recovery codes */}
+      <section className="mb-5 pt-5 border-t border-mk-border-card">
+        <h2 className="font-display font-extrabold text-[15px] text-mk-text mb-1">
+          Recovery codes
+        </h2>
+        <p className="text-xs text-mk-text-secondary mb-3 font-body">
+          One-time codes that get you back in if you lose your passkey. Generating new codes
+          replaces any old ones.
+        </p>
+        {recoveryCodes && (
+          <>
+            <div className="grid grid-cols-2 gap-2 mb-3 bg-mk-surface border-[1.5px] border-mk-border-card rounded-mk-md p-4">
+              {recoveryCodes.map((c) => (
+                <div key={c} className="font-mono text-sm text-mk-text text-center py-1">
+                  {c}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-mk-text-secondary mb-3 font-body">
+              Save these now — they won&apos;t be shown again.
+            </p>
+            <button
+              onClick={handleCopyRecoveryCodes}
+              className="mr-2 px-4 py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold"
+            >
+              {codesCopied ? "Copied ✓" : "Copy all codes"}
+            </button>
+          </>
+        )}
+        <button
+          onClick={handleGenerateRecoveryCodes}
+          disabled={codesLoading}
+          className="px-4 py-2.5 border-[1.5px] border-mk-sky text-mk-sky rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50"
+        >
+          {codesLoading
+            ? "Generating…"
+            : recoveryCodes
+              ? "Generate again"
+              : "Generate new recovery codes"}
         </button>
       </section>
 

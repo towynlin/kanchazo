@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { users, type NewUser, type User } from "@/lib/db/schema";
 
-export async function findUserByPhone(phone: string): Promise<User | null> {
-  const results = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+export async function findUserByEmail(email: string): Promise<User | null> {
+  const results = await db.select().from(users).where(eq(users.email, email)).limit(1);
   return results[0] ?? null;
 }
 
