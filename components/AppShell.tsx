@@ -89,7 +89,7 @@ export default function AppShell({
                 {teams.length > 1 ? "Tap to switch team" : "Your team"}
               </div>
               <div className="flex items-end justify-between gap-3">
-                <h1 className="font-display font-extrabold text-[34px] leading-none text-white">
+                <h1 className="font-display font-extrabold text-[34px] leading-[1.15] text-white">
                   {currentTeam?.name ?? "No team"}
                   {teams.length > 1 && (
                     <span className="ml-2 align-middle text-white/60 text-2xl font-body font-bold">
