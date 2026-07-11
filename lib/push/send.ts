@@ -7,7 +7,7 @@ function ensureConfigured() {
   if (configured) return;
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:admin@kanchazo.app";
+  const subject = process.env.VAPID_SUBJECT ?? "mailto:admin@kanchazo.com";
   if (!publicKey || !privateKey) return; // push disabled in dev without keys
   webpush.setVapidDetails(subject, publicKey, privateKey);
   configured = true;
