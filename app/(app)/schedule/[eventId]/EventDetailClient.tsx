@@ -337,7 +337,7 @@ export default function EventDetailClient({
           {!event.isCancelled && (
             <button
               onClick={() => setShowEdit(true)}
-              className="w-full py-3 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
+              className="w-full px-4 py-3 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
             >
               Edit event
             </button>
@@ -346,14 +346,14 @@ export default function EventDetailClient({
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="w-full py-3 border-[1.5px] border-mk-maybe-text text-mk-maybe-text rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50 bg-mk-bg"
+              className="w-full px-4 py-3 border-[1.5px] border-mk-maybe-text text-mk-maybe-text rounded-mk-md text-sm font-body font-extrabold disabled:opacity-50 bg-mk-bg"
             >
               {cancelling ? "Cancelling…" : "Cancel event"}
             </button>
           )}
           <button
             onClick={handleDelete}
-            className="w-full py-3 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
+            className="w-full px-4 py-3 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
           >
             Delete event
           </button>
