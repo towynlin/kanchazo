@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { createUser } from "@/lib/db/queries/users";
 import {
   createTeam,
+  updateTeam,
+  getTeamById,
   getTeamsByUser,
   addTeamMember,
   getTeamMembers,
@@ -38,6 +40,22 @@ describe("teams queries", () => {
     const coachMember = members.find((m) => m.userId === coach.id);
     expect(coachMember?.role).toBe("coach");
     expect(coachMember?.user.name).toBe("Coach Park");
+  });
+
+  it("updates a team name", async () => {
+    const coach = await createUser({ name: "Coach Sato", phone: "+14155550206" });
+    const team = await createTeam({ name: "Eagles", createdByUserId: coach.id });
+
+    const updated = await updateTeam(team.id, { name: "Golden Eagles" });
+    expect(updated?.name).toBe("Golden Eagles");
+
+    const fetched = await getTeamById(team.id);
+    expect(fetched?.name).toBe("Golden Eagles");
+  });
+
+  it("returns null when updating a nonexistent team", async () => {
+    const updated = await updateTeam("00000000-0000-0000-0000-000000000000", { name: "Ghosts" });
+    expect(updated).toBeNull();
   });
 
   it("gets membership for specific user/team", async () => {

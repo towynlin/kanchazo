@@ -33,6 +33,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const [mutedTeams, setMutedTeams] = useState<Set<string>>(new Set(mutedTeamIds));
   const [teamPrefLoading, setTeamPrefLoading] = useState<string | null>(null);
 
@@ -117,6 +118,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
   async function handleTogglePush() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
     setPushLoading(true);
+    setPushError(null);
     try {
       const reg = await navigator.serviceWorker.ready;
       const existing = await reg.pushManager.getSubscription();
@@ -133,11 +135,21 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
       }
 
       const keyRes = await fetch("/api/push");
-      if (!keyRes.ok) return;
+      if (!keyRes.ok) {
+        setPushError(
+          keyRes.status === 503
+            ? "Push notifications aren't configured on the server yet."
+            : "Couldn't enable notifications. Try again later.",
+        );
+        return;
+      }
       const { publicKey } = await keyRes.json();
 
       const perm = await Notification.requestPermission();
-      if (perm !== "granted") return;
+      if (perm !== "granted") {
+        setPushError("Notification permission was denied for this site.");
+        return;
+      }
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -394,6 +406,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
           >
             {pushLoading ? "…" : pushEnabled ? "Disable notifications" : "Enable notifications"}
           </button>
+          {pushError && <p className="mt-2 text-sm text-mk-no-text font-body">{pushError}</p>}
 
           {pushEnabled && teams.length > 0 && (
             <div className="mt-4">
