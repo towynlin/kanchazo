@@ -181,8 +181,8 @@ export default function EventDetailClient({
         </p>
       )}
 
-      {/* My players */}
-      {myPlayers.length > 0 && !event.isCancelled && (
+      {/* My players — parents edit their own here; coaches edit everyone in the full list below */}
+      {!isCoach && myPlayers.length > 0 && !event.isCancelled && (
         <div className="px-[18px] mt-5">
           <h3 className="font-display font-extrabold text-[15px] text-mk-text mb-[10px]">
             My players
@@ -237,11 +237,7 @@ export default function EventDetailClient({
               >
                 <Avatar name={p.name} seed={p.id} />
                 <div className="flex-1 min-w-0">
-                  <div
-                    className={`font-body font-extrabold text-[14px] ${p.isMyPlayer ? "text-mk-text" : "text-mk-text"}`}
-                  >
-                    {p.name}
-                  </div>
+                  <div className="font-body font-extrabold text-[14px] text-mk-text">{p.name}</div>
                   {p.isMyPlayer && (
                     <div
                       className="font-body font-bold text-[10px] text-mk-sky uppercase"
@@ -251,11 +247,27 @@ export default function EventDetailClient({
                     </div>
                   )}
                 </div>
-                <span
-                  className={`font-body font-extrabold text-[10px] px-2.5 py-1 rounded-full ${STATUS_BADGE[status]}`}
-                >
-                  {STATUS_BADGE_LABEL[status]}
-                </span>
+                {isCoach && !event.isCancelled ? (
+                  <div className="flex rounded-full overflow-hidden border-[1.5px] border-mk-border-card text-xs shrink-0">
+                    {(["yes", "maybe", "no"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setAvail(p.id, s)}
+                        className={`px-3 py-1.5 min-h-[36px] font-body font-extrabold text-[11px] transition-colors ${
+                          status === s ? STATUS_BADGE[s] : "bg-mk-bg text-mk-text-secondary"
+                        }`}
+                      >
+                        {STATUS_LABELS[s]}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span
+                    className={`font-body font-extrabold text-[10px] px-2.5 py-1 rounded-full ${STATUS_BADGE[status]}`}
+                  >
+                    {STATUS_BADGE_LABEL[status]}
+                  </span>
+                )}
               </div>
             );
           })}
