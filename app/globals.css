@@ -51,7 +51,8 @@
 :root {
   --background: #ffffff;
   --foreground: #0c1a28;
-  --font-display: var(--font-syne), "Syne", sans-serif;
+  --font-display: var(--font-archivo), "Archivo", sans-serif;
+  --font-logo: var(--font-syne), "Syne", sans-serif;
   --font-body: var(--font-figtree), "Figtree", sans-serif;
 }
 
@@ -62,8 +63,19 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Headings and team names: Archivo Expanded. font-stretch drives the
+   variable font's wdth axis to 125% for the wide, athletic look. */
 .font-display {
   font-family: var(--font-display);
+  font-stretch: 125%;
+  letter-spacing: -0.01em;
+}
+
+/* The "Kanchazo" wordmark only. Syne's descenders are flat-cut and shallow
+   by design (they look clipped), so never use this for arbitrary text —
+   "Kanchazo" itself has no descenders, which is why it's safe here. */
+.font-logo {
+  font-family: var(--font-logo);
   letter-spacing: -0.01em;
 }
 

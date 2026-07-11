@@ -38,7 +38,7 @@ export default function AuthClient() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-mk-bg">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="font-display font-extrabold text-[34px] text-mk-sky leading-none mb-2">
+          <h1 className="font-logo font-extrabold text-[34px] text-mk-sky leading-none mb-2">
             Kanch<span className="text-mk-grass">azo</span>
           </h1>
           <p
