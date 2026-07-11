@@ -5,8 +5,7 @@ import type { NextResponse } from "next/server";
 import type { User, Session } from "@/lib/db/schema";
 
 type AuthResult =
-  | { ok: true; user: User; session: Session }
-  | { ok: false; response: NextResponse };
+  { ok: true; user: User; session: Session } | { ok: false; response: NextResponse };
 
 export async function requireAuth(): Promise<AuthResult> {
   const result = await getSessionAndUser();
