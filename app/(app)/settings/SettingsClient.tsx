@@ -214,7 +214,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
 
   return (
     <div className="pb-8 px-[18px] pt-4">
-      <h1 className="font-display font-extrabold text-[22px] leading-[1.3] text-mk-text mb-4">
+      <h1 className="font-display font-extrabold text-[22px] leading-[1.1] text-mk-text mb-4">
         Settings
       </h1>
 
