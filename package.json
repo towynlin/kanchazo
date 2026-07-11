@@ -29,7 +29,7 @@
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",
     "@simplewebauthn/server": "^13.3.0",
-    "cookie": "^1.1.1",
+    "cookie": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "libphonenumber-js": "^1.13.0",
     "next": "16.2.6",
@@ -47,7 +47,7 @@
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@types/cookie": "^1.0.0",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
