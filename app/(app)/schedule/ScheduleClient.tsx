@@ -20,12 +20,18 @@ interface SerializedEvent {
   timeLabel: string;
 }
 
+interface RosterPlayer {
+  id: string;
+  name: string;
+  isMyPlayer: boolean;
+}
+
 interface Props {
   teamId: string;
   timeZone: string;
   isCoach: boolean;
   events: SerializedEvent[];
-  myPlayers: { id: string; name: string }[];
+  players: RosterPlayer[];
   initialAvailability: Record<string, Record<string, "yes" | "no" | "maybe">>;
 }
 
@@ -40,7 +46,7 @@ export default function ScheduleClient({
   timeZone,
   isCoach,
   events: initialEvents,
-  myPlayers,
+  players,
   initialAvailability,
 }: Props) {
   const [events, setEvents] = useState(initialEvents);
@@ -188,10 +194,11 @@ export default function ScheduleClient({
               <EventRow
                 key={event.id}
                 event={event}
-                myPlayers={myPlayers}
+                players={players}
+                isCoach={isCoach}
                 availability={availability[event.id] ?? {}}
                 onSetAvail={(playerId, status) => setAvail(event.id, playerId, status)}
-                pending={myPlayers.some((p) => optimisticPending.has(`${event.id}:${p.id}`))}
+                pending={players.some((p) => optimisticPending.has(`${event.id}:${p.id}`))}
               />
             ))}
           </div>
@@ -331,18 +338,24 @@ function CoachFab({ onClick }: { onClick: () => void }) {
 
 function EventRow({
   event,
-  myPlayers,
+  players,
+  isCoach,
   availability,
   onSetAvail,
   pending,
 }: {
   event: SerializedEvent;
-  myPlayers: { id: string; name: string }[];
+  players: RosterPlayer[];
+  isCoach: boolean;
   availability: Record<string, "yes" | "no" | "maybe">;
   onSetAvail: (playerId: string, status: "yes" | "no" | "maybe") => void;
   pending: boolean;
 }) {
   const isCancelled = event.status === "cancelled";
+  // Show the player's name whenever the row lists more than one player, so
+  // coaches (who see the whole roster) can tell the controls apart.
+  const showNames = players.length > 1;
+  const inCount = players.filter((p) => availability[p.id] === "yes").length;
 
   return (
     <div className={`px-[18px] py-3 ${isCancelled ? "opacity-60" : ""}`}>
@@ -386,13 +399,21 @@ function EventRow({
         </div>
       </Link>
 
-      {myPlayers.length > 0 && !isCancelled && (
+      {players.length > 0 && !isCancelled && (
         <div className="mt-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-          {myPlayers.map((player) => {
+          {isCoach && (
+            <div
+              className="font-body font-bold text-[9px] text-mk-text-muted uppercase pt-1"
+              style={{ letterSpacing: "0.12em" }}
+            >
+              Who's coming? · {inCount}/{players.length} in
+            </div>
+          )}
+          {players.map((player) => {
             const current = availability[player.id] ?? "maybe";
             return (
               <div key={player.id} className="flex items-center gap-2">
-                {myPlayers.length > 1 && (
+                {showNames && (
                   <span className="font-body font-bold text-[11px] text-mk-text-secondary w-16 truncate">
                     {player.name}
                   </span>

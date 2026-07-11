@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionAndUser } from "@/lib/auth/session";
 import { getTeamsByUser, getTeamMembership } from "@/lib/db/queries/teams";
 import { getTeamEvents } from "@/lib/db/queries/events";
-import { getPlayersByGuardian } from "@/lib/db/queries/players";
+import { getPlayersByGuardian, getTeamPlayers } from "@/lib/db/queries/players";
 import { getEventAvailability } from "@/lib/db/queries/availability";
 import { formatEventDate, formatEventTitle, formatEventTimeRange } from "@/lib/domain/events";
 import ScheduleClient from "./ScheduleClient";
@@ -20,9 +20,14 @@ export default async function SchedulePage() {
 
   const team = (await selectTeam(teams))!;
   const membership = await getTeamMembership(team.id, auth.user.id);
+  const isCoach = membership?.role === "coach";
   const events = await getTeamEvents(team.id);
   const myPlayers = await getPlayersByGuardian(auth.user.id);
   const teamPlayers = myPlayers.filter((p) => p.teamId === team.id);
+  const myPlayerIds = new Set(teamPlayers.map((p) => p.id));
+
+  // Coaches manage the whole roster; parents manage only their own players.
+  const rosterPlayers = isCoach ? await getTeamPlayers(team.id) : teamPlayers;
 
   // Fetch availability for all events for my players
   const availabilityByEvent: Record<string, Record<string, "yes" | "no" | "maybe">> = {};
@@ -53,9 +58,13 @@ export default async function SchedulePage() {
     <ScheduleClient
       teamId={team.id}
       timeZone={team.timeZone}
-      isCoach={membership?.role === "coach"}
+      isCoach={isCoach}
       events={serializedEvents}
-      myPlayers={teamPlayers.map((p) => ({ id: p.id, name: p.name }))}
+      players={rosterPlayers.map((p) => ({
+        id: p.id,
+        name: p.name,
+        isMyPlayer: myPlayerIds.has(p.id),
+      }))}
       initialAvailability={availabilityByEvent}
     />
   );
