@@ -84,14 +84,20 @@ body {
   );
 }
 
-/* Minimum 44×44 tap targets */
-button,
-a,
-[role="button"],
-[role="tab"] {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
+/* Minimum 44×44 tap targets.
+   Wrapped in @layer base so Tailwind utilities (e.g. `block`, `min-h-0`)
+   can still override it — unlayered CSS always beats layered CSS in the
+   cascade, regardless of specificity, which otherwise silently breaks any
+   component that tries to un-flex a <button> or <a>. */
+@layer base {
+  button,
+  a,
+  [role="button"],
+  [role="tab"] {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .chat-body a {
