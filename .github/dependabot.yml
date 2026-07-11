@@ -9,3 +9,32 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    # Keep tightly-coupled packages in a single PR so their versions never
+    # drift apart (e.g. the parser and plugin must match, and React must
+    # match its type definitions). Separate PRs for these have failed CI.
+    groups:
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/*"
+          - "typescript-eslint"
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "eslint-plugin-*"
+          - "eslint-config-*"
+          - "globals"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+    ignore:
+      # TypeScript major upgrades (e.g. the native "TypeScript 7" port) are
+      # gated on @typescript-eslint supporting them — its peer dependency
+      # currently caps at "<6.1.0", so a major bump breaks `npm ci`. Re-enable
+      # once the eslint toolchain declares support for the new major.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
