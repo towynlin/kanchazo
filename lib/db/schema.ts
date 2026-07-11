@@ -28,7 +28,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: text("email"),
-  phone: text("phone").notNull().unique(), // E.164, unique
+  phone: text("phone"), // E.164, optional unverified contact info
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -60,17 +60,36 @@ export const sessions = pgTable(
   (t) => [index("sessions_token_hash_idx").on(t.tokenHash)],
 );
 
-export const magicTokens = pgTable(
-  "magic_tokens",
+export const recoveryCodes = pgTable(
+  "recovery_codes",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    phone: text("phone").notNull(), // E.164
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull().unique(), // sha256(normalized code)
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("recovery_codes_user_idx").on(t.userId)],
+);
+
+export const recoveryLinks = pgTable(
+  "recovery_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }), // null = system admin CLI
     tokenHash: text("token_hash").notNull().unique(), // sha256(raw token)
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     usedAt: timestamp("used_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("magic_tokens_phone_idx").on(t.phone)],
+  (t) => [index("recovery_links_user_idx").on(t.userId)],
 );
 
 // ──────────────────────────────────────────────
@@ -315,4 +334,5 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
-export type MagicToken = typeof magicTokens.$inferSelect;
+export type RecoveryCode = typeof recoveryCodes.$inferSelect;
+export type RecoveryLink = typeof recoveryLinks.$inferSelect;

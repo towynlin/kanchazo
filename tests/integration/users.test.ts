@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  findUserByPhone,
+  findUserByEmail,
   createUser,
   updateUser,
   deleteUser,
@@ -8,17 +8,23 @@ import {
 } from "@/lib/db/queries/users";
 
 describe("users queries", () => {
-  it("creates a user and finds by phone", async () => {
-    const user = await createUser({ name: "Alice", phone: "+14155550101" });
+  it("creates a user and finds by email", async () => {
+    const user = await createUser({ name: "Alice", email: "alice@example.com" });
     expect(user.id).toBeTruthy();
     expect(user.name).toBe("Alice");
 
-    const found = await findUserByPhone("+14155550101");
+    const found = await findUserByEmail("alice@example.com");
     expect(found?.id).toBe(user.id);
   });
 
-  it("returns null for unknown phone", async () => {
-    expect(await findUserByPhone("+10000000000")).toBeNull();
+  it("returns null for unknown email", async () => {
+    expect(await findUserByEmail("nobody@example.com")).toBeNull();
+  });
+
+  it("creates a user without phone or email", async () => {
+    const user = await createUser({ name: "Nameless" });
+    expect(user.phone).toBeNull();
+    expect(user.email).toBeNull();
   });
 
   it("finds user by id", async () => {

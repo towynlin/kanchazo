@@ -30,7 +30,7 @@ export async function buildRegistrationOptions(user: User) {
   return generateRegistrationOptions({
     rpName,
     rpID,
-    userName: user.phone,
+    userName: user.email ?? user.name,
     userDisplayName: user.name,
     attestationType: "none",
     excludeCredentials: existingPasskeys.map((p) => ({

@@ -66,13 +66,8 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET, API calls, WS, and auth verify (magic-link redirect — browsers reject SW-served redirects)
-  if (
-    request.method !== "GET" ||
-    url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/auth/verify") ||
-    url.protocol === "ws:"
-  ) {
+  // Skip non-GET, API calls, and WS
+  if (request.method !== "GET" || url.pathname.startsWith("/api/") || url.protocol === "ws:") {
     return;
   }
 

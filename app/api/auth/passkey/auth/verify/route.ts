@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyAuthentication } from "@/lib/auth/passkeys";
-import { createSessionForUser } from "@/lib/auth/magic-link";
-import { makeSessionCookieHeader } from "@/lib/auth/session";
+import { createSessionForUser, makeSessionCookieHeader } from "@/lib/auth/session";
 import { ok, err } from "@/lib/api/response";
 import { cookies } from "next/headers";
 

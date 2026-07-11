@@ -30,7 +30,6 @@ services:
       DATABASE_URL: postgres://kanchazo:kanchazo@postgres:5432/kanchazo
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       SESSION_SECRET: dev-secret-change-in-production
-      SMS_PROVIDER: logger
       EMAIL_PROVIDER: logger
       WEBAUTHN_RP_NAME: Kanchazo
       WEBAUTHN_RP_ID: localhost

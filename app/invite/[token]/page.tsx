@@ -7,8 +7,8 @@ import { useParams, useRouter } from "next/navigation";
 interface InviteInfo {
   invitedRole: "parent" | "coach";
   team: { id: string; name: string } | null;
-  contactPhone: string | null;
   contactEmail: string | null;
+  signedInAs: { name: string } | null;
 }
 
 function InvitePageContent() {
@@ -28,22 +28,18 @@ function InvitePageContent() {
         if (!r.ok) throw new Error(r.status === 410 ? "expired" : "not-found");
         return r.json();
       })
-      .then((data) => {
-        setInfo(data);
-        if (data.contactPhone) setPhone(data.contactPhone);
-      })
+      .then((data) => setInfo(data))
       .catch((e) => setLoadError(e.message));
   }, [token]);
 
-  async function handleAccept(e: FormEvent) {
-    e.preventDefault();
+  async function accept(body: { name?: string; phone?: string | null }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
       const res = await fetch(`/api/invitations/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -51,10 +47,16 @@ function InvitePageContent() {
         return;
       }
       const d = await res.json();
-      router.push(d.teamId ? "/schedule" : "/schedule");
+      // Brand-new accounts set up a passkey + recovery codes before anything else
+      router.push(d.isNewUser ? "/auth/setup" : "/schedule");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleAccept(e: FormEvent) {
+    e.preventDefault();
+    void accept({ name, phone: phone.trim() || null });
   }
 
   if (loadError) {
@@ -104,53 +106,78 @@ function InvitePageContent() {
           </p>
         </div>
 
-        <form onSubmit={handleAccept} className="space-y-4">
-          <div>
-            <label className="block text-sm font-body font-bold text-mk-text mb-1">Your name</label>
-            <input
-              type="text"
-              autoComplete="name"
-              placeholder="Jane Smith"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-            />
+        {info.signedInAs ? (
+          <div className="space-y-4">
+            <p className="text-sm text-mk-text-secondary font-body text-center">
+              You&apos;re signed in as{" "}
+              <span className="font-extrabold text-mk-text">{info.signedInAs.name}</span>.
+            </p>
+            {submitError && (
+              <p className="text-mk-no-text text-sm font-body text-center">{submitError}</p>
+            )}
+            <button
+              onClick={() => void accept({})}
+              disabled={submitting}
+              className="w-full py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
+                         disabled:opacity-50"
+            >
+              {submitting ? "Joining…" : "Accept invitation"}
+            </button>
           </div>
+        ) : (
+          <form onSubmit={handleAccept} className="space-y-4">
+            <div>
+              <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                Your name
+              </label>
+              <input
+                type="text"
+                autoComplete="name"
+                placeholder="Jane Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                           focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-body font-bold text-mk-text mb-1">
-              Phone number
-            </label>
-            <input
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="+1 (555) 555-0123"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
-                         focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-body font-bold text-mk-text mb-1">
+                Phone <span className="text-mk-text-muted font-normal">(optional)</span>
+              </label>
+              <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+1 (555) 555-0123"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-3 border border-mk-border-card rounded-mk-md text-base bg-mk-bg
+                           focus:outline-none focus:ring-2 focus:ring-mk-sky font-body"
+              />
+              <p className="mt-1 text-xs text-mk-text-muted font-body">
+                Shown on the team roster so other families can reach you.
+              </p>
+            </div>
 
-          {submitError && <p className="text-mk-no-text text-sm font-body">{submitError}</p>}
+            {submitError && <p className="text-mk-no-text text-sm font-body">{submitError}</p>}
 
-          <p className="text-xs text-mk-text-muted font-body">
-            After accepting, you&apos;ll receive a sign-in link to verify your number.
-          </p>
+            <p className="text-xs text-mk-text-muted font-body">
+              Next you&apos;ll set up a passkey — sign in with your face or fingerprint, no password
+              needed.
+            </p>
 
-          <button
-            type="submit"
-            disabled={submitting || !name || !phone}
-            className="w-full py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
-                       disabled:opacity-50"
-          >
-            {submitting ? "Joining…" : "Accept invitation"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={submitting || !name}
+              className="w-full py-3 px-4 bg-mk-sky text-white rounded-mk-md font-body font-extrabold text-base
+                         disabled:opacity-50"
+            >
+              {submitting ? "Joining…" : "Accept invitation"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

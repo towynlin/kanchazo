@@ -12,7 +12,8 @@ Kanchazo is a mobile-first, invite-only PWA for managing youth sports teams: sch
 
 ```bash
 make dev                  # Start Postgres (Docker) + migrations + Next dev server on :3000
-make seed-admin PHONE=+14155550100   # Bootstrap first coach invite (app is invite-only)
+make seed-admin           # Bootstrap first coach invite (app is invite-only)
+make recovery-link USER_ID=<id-or-email>   # Sysadmin one-time sign-in link for a locked-out user
 
 npm run lint              # eslint + tsc --noEmit + prettier --check (exactly what CI runs)
 npm run lint:fix          # auto-fix eslint + prettier
@@ -61,7 +62,7 @@ app/api/**/route.ts        HTTP layer: zod-parse input, call auth guards, call q
 
 ### Auth
 
-No passwords. SMS magic links (`lib/auth/magic-link.ts` + `magic_tokens` table) create a session: an opaque token in the `kanchazo_session` cookie, stored server-side as a sha256 hash in `sessions` with a 30-day rolling expiry (`lib/auth/session.ts`). Passkeys (SimpleWebAuthn, `lib/auth/passkeys.ts`) are offered after first login. Signup is invite-only via the `invitations` table; `scripts/seed-admin.ts` creates the first invite. Server pages gate auth in `app/(app)/layout.tsx` (redirects to `/auth`); API routes use the `lib/api/require-auth.ts` guards. The active team is the `kanchazo_team` cookie (`lib/api/selected-team.ts`).
+No passwords, no SMS. Passkeys (SimpleWebAuthn, `lib/auth/passkeys.ts`) are the only sign-in method; a successful auth creates a session: an opaque token in the `kanchazo_session` cookie, stored server-side as a sha256 hash in `sessions` with a 30-day rolling expiry (`lib/auth/session.ts`). Signup is invite-only via the `invitations` table — invite URLs are shown to the inviter to share over any channel (optionally emailed); `scripts/seed-admin.ts` creates the first invite. New users land on `/auth/setup`, which registers their first passkey and shows single-use recovery codes (`lib/auth/recovery.ts`, `recovery_codes` table, redeemed at `/auth/recover`). If a member loses both passkey and codes, a coach generates a 24-hour single-use sign-in link from the roster (`recovery_links` table, landing page `/recover/[token]`); `scripts/recovery-link.ts` does the same from the CLI for sysadmins. Server pages gate auth in `app/(app)/layout.tsx` (redirects to `/auth`); API routes use the `lib/api/require-auth.ts` guards. The active team is the `kanchazo_team` cookie (`lib/api/selected-team.ts`).
 
 ### Real-time chat
 
@@ -69,7 +70,7 @@ Clients open a WebSocket to `/api/ws?team=<teamId>`, authenticated by the same s
 
 ### Pluggable providers
 
-SMS (`lib/sms/`) and email (`lib/email/`) are interfaces selected by `SMS_PROVIDER` / `EMAIL_PROVIDER` env vars: `twilio`/`resend` in production, `logger` (prints to console) in dev and tests. This means local dev needs no external credentials — magic links appear in the server console. Copy `.env.example` to `.env`; the defaults work as-is (`make dev` even does the copy for you).
+Email (`lib/email/`) is an interface selected by the `EMAIL_PROVIDER` env var: `resend` in production, `logger` (prints to console) in dev and tests. This means local dev needs no external credentials — invite emails appear in the server console. Copy `.env.example` to `.env`; the defaults work as-is (`make dev` even does the copy for you).
 
 ### Frontend
 
