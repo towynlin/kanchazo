@@ -454,13 +454,13 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
       <section className="mb-5 pt-5 border-t border-mk-border-card space-y-2">
         <button
           onClick={() => handleSignOut(false)}
-          className="w-full py-3 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
+          className="w-full py-3 px-4 border-[1.5px] border-mk-border-card text-mk-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
         >
           Sign out
         </button>
         <button
           onClick={() => handleSignOut(true)}
-          className="w-full py-3 text-mk-no-text text-sm font-body font-extrabold"
+          className="w-full py-3 px-4 text-mk-no-text text-sm font-body font-extrabold"
         >
           Sign out everywhere
         </button>
@@ -486,7 +486,7 @@ export default function SettingsClient({ user, passkeys, teams, mutedTeamIds }: 
             });
             if (res.ok) router.push("/auth");
           }}
-          className="w-full py-3 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
+          className="w-full py-3 px-4 border-[1.5px] border-mk-no-text/40 text-mk-no-text rounded-mk-md text-sm font-body font-extrabold bg-mk-bg"
         >
           Delete my account
         </button>
