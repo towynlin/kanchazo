@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && esbuild server.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server.js --packages=external",
+    "build": "next build && esbuild server.ts --bundle --platform=node --target=node24 --format=cjs --outfile=server.js --packages=external",
     "start": "NODE_ENV=production node server.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -47,7 +47,7 @@
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/cookie": "^1.0.0",
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
