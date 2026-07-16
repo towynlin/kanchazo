@@ -5,6 +5,7 @@ import { getEventById } from "@/lib/db/queries/events";
 import { findUserById } from "@/lib/db/queries/users";
 import { getTeamPlayers, getPlayersByGuardian } from "@/lib/db/queries/players";
 import { getEventAvailability } from "@/lib/db/queries/availability";
+import { getGameReportByEvent } from "@/lib/db/queries/game-reports";
 import {
   formatEventTitle,
   formatEventDate,
@@ -38,10 +39,15 @@ export default async function EventDetailPage({
   const myPlayers = await getPlayersByGuardian(auth.user.id);
   const myTeamPlayerIds = new Set(myPlayers.filter((p) => p.teamId === team.id).map((p) => p.id));
 
-  const [availRows, notesEditor] = await Promise.all([
+  // Score + coach notes are private to coaches — never fetched for parents.
+  const [availRows, notesEditor, gameReport] = await Promise.all([
     getEventAvailability(event.id),
     event.notesEditorId ? findUserById(event.notesEditorId) : null,
+    isCoach && event.kind === "game" ? getGameReportByEvent(event.id) : null,
   ]);
+  const reportEditor = gameReport?.updatedByUserId
+    ? await findUserById(gameReport.updatedByUserId)
+    : null;
   const availMap: Record<string, "yes" | "no" | "maybe"> = {};
   for (const a of availRows) {
     availMap[a.playerId] = a.status;
@@ -71,6 +77,18 @@ export default async function EventDetailPage({
         isCancelled: isCancelledEvent(event),
       }}
       isCoach={isCoach}
+      gameReport={
+        gameReport
+          ? {
+              ourScore: gameReport.ourScore,
+              opponentScore: gameReport.opponentScore,
+              coachNotes: gameReport.coachNotes,
+              version: gameReport.version,
+              updatedAt: gameReport.updatedAt.toISOString(),
+              updatedByName: reportEditor?.name ?? null,
+            }
+          : null
+      }
       players={teamPlayers.map((p) => ({
         id: p.id,
         name: p.name,

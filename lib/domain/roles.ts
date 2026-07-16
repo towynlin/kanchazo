@@ -18,6 +18,14 @@ export function canEditNotes(role: TeamRole): boolean {
   return role === "coach";
 }
 
+export function canViewGameReport(role: TeamRole): boolean {
+  return role === "coach"; // score + coach notes are private to coaches
+}
+
+export function canEditGameReport(role: TeamRole): boolean {
+  return role === "coach";
+}
+
 export function canInviteParent(role: TeamRole): boolean {
   return role === "coach";
 }

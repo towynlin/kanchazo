@@ -197,6 +197,32 @@ export const availability = pgTable(
 );
 
 // ──────────────────────────────────────────────
+// Game reports (coach-only score + private notes)
+// ──────────────────────────────────────────────
+
+export const gameReports = pgTable(
+  "game_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    ourScore: integer("our_score"),
+    opponentScore: integer("opponent_score"),
+    coachNotes: text("coach_notes"),
+    // Optimistic-concurrency counter: bumped on every save; writers must
+    // present the version their edit was based on or the save is rejected.
+    version: integer("version").notNull().default(1),
+    updatedByUserId: uuid("updated_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("game_reports_event_unique").on(t.eventId)],
+);
+
+// ──────────────────────────────────────────────
 // Chat
 // ──────────────────────────────────────────────
 
@@ -330,6 +356,8 @@ export type NewPlayer = typeof players.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type Availability = typeof availability.$inferSelect;
+export type GameReport = typeof gameReports.$inferSelect;
+export type NewGameReport = typeof gameReports.$inferInsert;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
