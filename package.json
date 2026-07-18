@@ -31,7 +31,7 @@
     "@simplewebauthn/server": "^13.3.2",
     "cookie": "^2.0.1",
     "drizzle-orm": "^0.45.2",
-    "libphonenumber-js": "^1.13.8",
+    "libphonenumber-js": "^1.13.9",
     "next": "16.2.6",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
